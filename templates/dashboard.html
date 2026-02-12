@@ -1,0 +1,30 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<h2>Welcome {{ session['user_name'] }}</h2>
+
+{% if session['role'] == 'provider' %}
+  <a href="/add-skill">Add Skill</a>
+  <br><br> 
+  <a href="/my-bookings">View Booking Requests</a>
+  <br><br>
+
+
+{% else %}
+  <a href="/search">Search Services</a> 
+  <br><br>
+  <a href="/my-bookings">My Bookings</a>
+  <br><br>
+
+{% endif %}
+
+<a href="/logout">Logout</a>
+
+</body>
+</html>
