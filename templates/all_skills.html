@@ -1,0 +1,18 @@
+<h2>All Skills</h2>
+
+<!-- Category Filter -->
+<a href="/all-skills">All</a> |
+<a href="/all-skills?category=Electrical">Electrical</a> |
+<a href="/all-skills?category=Teaching">Teaching</a> |
+<a href="/all-skills?category=Repair">Repair</a>
+
+<hr>
+
+{% for s in skills %}
+<p>
+<b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
+Provider: {{ s.provider_name }} <br>
+{{ s.description }}
+</p>
+<hr>
+{% endfor %}

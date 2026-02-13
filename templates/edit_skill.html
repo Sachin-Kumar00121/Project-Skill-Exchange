@@ -1,0 +1,8 @@
+<h2>Edit Skill</h2>
+
+<form method="POST">
+<input type="text" name="skill_name" value="{{ skill.skill_name }}" required><br><br>
+<input type="text" name="category" value="{{ skill.category }}" required><br><br>
+<textarea name="description" required>{{ skill.description }}</textarea><br><br>
+<button type="submit">Update Skill</button>
+</form>

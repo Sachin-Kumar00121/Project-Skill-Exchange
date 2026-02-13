@@ -1,0 +1,14 @@
+<h2>My Skills</h2>
+
+{% for s in skills %}
+<p>
+<b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
+{{ s.description }} <br>
+<a href="/edit-skill/{{ s.skill_id }}">Edit</a> |
+<a href="/delete-skill/{{ s.skill_id }}">Delete</a>
+</p>
+<hr>
+{% endfor %}
+
+<a href="/add-skill">Add New Skill</a>
+<br><br>

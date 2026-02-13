@@ -122,6 +122,106 @@ def logout():
     session.clear()
     return redirect("/login")
 
+@app.route("/add-skill", methods=["GET", "POST"])
+def add_skill():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "provider":
+        return "Only providers can add skills."
+
+    if request.method == "GET":
+        return render_template("add_skill.html")
+
+    skill_name = request.form["skill_name"]
+    category = request.form["category"]
+    description = request.form["description"]
+
+    cursor.execute(
+        "INSERT INTO skills (provider_id, skill_name, category, description) VALUES (%s, %s, %s, %s)",
+        (session["user_id"], skill_name, category, description)
+    )
+    db.commit()
+
+    return "Skill Added Successfully"
+
+@app.route("/my-skills")
+def my_skills():
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if session.get("role") != "provider":
+        return "Access Denied"
+
+    cursor.execute(
+        "SELECT * FROM skills WHERE provider_id=%s ORDER BY skill_id DESC",
+        (session["user_id"],)
+    )
+
+    skills = cursor.fetchall()
+    return render_template("my_skills.html", skills=skills)
+
+@app.route("/delete-skill/<int:skill_id>")
+def delete_skill(skill_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    cursor.execute(
+        "DELETE FROM skills WHERE skill_id=%s AND provider_id=%s",
+        (skill_id, session["user_id"])
+    )
+    db.commit()
+
+    return redirect("/my-skills")
+
+@app.route("/edit-skill/<int:skill_id>", methods=["GET", "POST"])
+def edit_skill(skill_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if request.method == "GET":
+        cursor.execute(
+            "SELECT * FROM skills WHERE skill_id=%s AND provider_id=%s",
+            (skill_id, session["user_id"])
+        )
+        skill = cursor.fetchone()
+        return render_template("edit_skill.html", skill=skill)
+
+    skill_name = request.form["skill_name"]
+    category = request.form["category"]
+    description = request.form["description"]
+
+    cursor.execute(
+        "UPDATE skills SET skill_name=%s, category=%s, description=%s WHERE skill_id=%s AND provider_id=%s",
+        (skill_name, category, description, skill_id, session["user_id"])
+    )
+    db.commit()
+
+    return redirect("/my-skills")
+
+@app.route("/all-skills")
+def all_skills():
+    category = request.args.get("category")
+
+    if category:
+        cursor.execute("""
+            SELECT s.*, u.name AS provider_name
+            FROM skills s
+            JOIN users u ON s.provider_id = u.user_id
+            WHERE s.category=%s
+            ORDER BY s.skill_id DESC
+        """, (category,))
+    else:
+        cursor.execute("""
+            SELECT s.*, u.name AS provider_name
+            FROM skills s
+            JOIN users u ON s.provider_id = u.user_id
+            ORDER BY s.skill_id DESC
+        """)
+
+    skills = cursor.fetchall()
+    return render_template("all_skills.html", skills=skills)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
