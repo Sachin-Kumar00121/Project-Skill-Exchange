@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask import Flask, render_template, request, redirect, session
+
+import re
+
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -48,6 +51,14 @@ def register_common(role):
     # Confirm password check
     if password != confirm_password:
         return "Password and Confirm Password do not match"
+    
+
+    # Strong password validation
+    pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$'
+    if not re.match(pattern, password):
+        return render_template("register.html", role=role, error="Password must be at least 8 characters long and include uppercase, lowercase, number and special character.")
+
+
 
     # Detect email/phone
     is_email = "@" in identifier

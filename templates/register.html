@@ -4,21 +4,37 @@
 <head>
     <title>Register</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
 </head>
 <body>
 
 <h2>Register as {{ role|capitalize }}</h2>
 
+{% if error %}
+    <p style="color:red; text-align:center;">{{ error }}</p>
+{% endif %}
+
 <form method="POST">
-    <input type="text" name="name" placeholder="Enter Name" required><br><br>
 
-    <input type="text" name="identifier" placeholder="Email or Phone" required><br><br>
+    <input type="text" name="name" placeholder="Enter Name" required>
 
-    <input type="password" name="password" placeholder="Enter Password" required><br><br>
+    <input type="text" name="identifier" placeholder="Email or Phone" required>
 
-    <input type="password" name="confirm_password" placeholder="Confirm Password" required><br><br>
+    <div class="password-container">
+        <input type="password" name="password" id="password" placeholder="Enter Password" required onkeyup="checkStrength()">
+        <span onclick="togglePassword('password')">👁</span>
+    </div>
+
+    <div id="strengthMessage"></div>
+
+    <div class="password-container">
+        <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
+        <span onclick="togglePassword('confirm_password')">👁</span>
+    </div>
 
     <button type="submit">Register</button>
+
 </form>
 
 <p>Already have account? <a href="/login">Login</a></p>
