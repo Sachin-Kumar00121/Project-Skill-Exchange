@@ -1,4 +1,6 @@
-
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, render_template, request, redirect, session
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,10 +10,12 @@ app.secret_key = "skill_exchange_secret"
 
 # ✅ MySQL Connection (apna password yahan set karo)
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="Sachin@#8057",   # <-- yahan apna MySQL password
-    database="skill_exchange"
+    host=os.getenv("DB_HOST", "localhost"),
+    user=os.getenv("DB_USER", "root"),
+    password=os.getenv("DB_PASS", "Sachin@#8057"),   # <-- yahan apna MySQL password
+    database=os.getenv("DB_NAME", "skill_exchange"),
+    port=int(os.getenv("DB_PORT", "3306"))
+
 )
 cursor = db.cursor(dictionary=True)
 
