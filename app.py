@@ -108,11 +108,11 @@ def login():
 
         user = cursor.fetchone()
 
-        # ✅ YAHI WO JAGAH HAI
+        
         if user and check_password_hash(user["password"], password):
             session["user_id"] = user["user_id"]
             session["user_name"] = user["name"]
-            session["role"] = user["role"]   # 👈 यही line tum pooch rahe the
+            session["role"] = user["role"]   
 
             return redirect("/dashboard")
 
@@ -123,7 +123,7 @@ def login():
 
 
 
-# ✅ Dashboard (protected)
+# ✅ Dashboard 
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
