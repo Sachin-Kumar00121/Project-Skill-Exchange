@@ -137,6 +137,8 @@ def logout():
     session.clear()
     return redirect("/login")
 
+# Add Skill 
+
 @app.route("/add-skill", methods=["GET", "POST"])
 def add_skill():
     if "user_id" not in session:
