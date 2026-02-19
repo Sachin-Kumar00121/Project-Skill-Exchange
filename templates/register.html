@@ -21,14 +21,14 @@
 
     <input type="text" name="identifier" placeholder="Email or Phone" required>
 
-    <div class="password-container">
+    <div class="password-wrapper">
         <input type="password" name="password" id="password" placeholder="Enter Password" required onkeyup="checkStrength()">
         <span onclick="togglePassword('password')">👁</span>
     </div>
 
     <div id="strengthMessage"></div>
 
-    <div class="password-container">
+    <div class="password-wrapper">
         <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
         <span onclick="togglePassword('confirm_password')">👁</span>
     </div>

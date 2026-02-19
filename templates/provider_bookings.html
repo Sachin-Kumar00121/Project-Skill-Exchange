@@ -1,0 +1,15 @@
+<h2>Booking Requests</h2>
+
+{% for booking in bookings %}
+    <div>
+        <strong>{{ booking.skill_name }}</strong><br>
+        User: {{ booking.user_name }}<br>
+        Status: {{ booking.status }}<br>
+
+        {% if booking.status == 'pending' %}
+            <a href="/update-booking/{{ booking.booking_id }}/accepted">Accept</a>
+            <a href="/update-booking/{{ booking.booking_id }}/rejected">Reject</a>
+        {% endif %}
+        <br><br>
+    </div>
+{% endfor %}

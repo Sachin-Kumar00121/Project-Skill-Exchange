@@ -117,7 +117,7 @@ def login():
             return redirect("/dashboard")
 
         else:
-            return "Invalid login credentials"
+            return render_template("login.html", error="Invalid login credentials")
 
     return render_template("login.html")
 
@@ -137,31 +137,39 @@ def logout():
     session.clear()
     return redirect("/login")
 
-# Add Skill 
-
+# Add Skill Route
 @app.route("/add-skill", methods=["GET", "POST"])
 def add_skill():
-    if "user_id" not in session:
+    if 'user_id' not in session:
         return redirect("/login")
 
-    if session.get("role") != "provider":
-        return "Only providers can add skills."
+    if request.method == "POST":
+        provider_id = session['user_id']
+        skill_name = request.form['skill_name'].strip()
+        category = request.form['category']
+        description = request.form['description']
 
-    if request.method == "GET":
-        return render_template("add_skill.html")
+        # Duplicate check
+        cursor.execute(
+            "SELECT skill_id FROM skills WHERE provider_id=%s AND LOWER(skill_name)=%s",
+            (provider_id, skill_name.lower())
+        )
 
-    skill_name = request.form["skill_name"]
-    category = request.form["category"]
-    description = request.form["description"]
+        if cursor.fetchone():
+            return render_template("add_skill.html", error="You already added this skill.")
 
-    cursor.execute(
-        "INSERT INTO skills (provider_id, skill_name, category, description) VALUES (%s, %s, %s, %s)",
-        (session["user_id"], skill_name, category, description)
-    )
-    db.commit()
+        cursor.execute(
+            "INSERT INTO skills (provider_id, skill_name, category, description) VALUES (%s,%s,%s,%s)",
+            (provider_id, skill_name, category, description)
+        )
+        db.commit()
 
-    return "Skill Added Successfully"
+        return render_template("add_skill.html", success="Skill Added Successfully")
 
+    return render_template("add_skill.html")
+
+
+# View My Skills Route
 @app.route("/my-skills")
 def my_skills():
     if "user_id" not in session:
@@ -178,6 +186,7 @@ def my_skills():
     skills = cursor.fetchall()
     return render_template("my_skills.html", skills=skills)
 
+# Delete Skill Route
 @app.route("/delete-skill/<int:skill_id>")
 def delete_skill(skill_id):
     if "user_id" not in session:
@@ -191,6 +200,7 @@ def delete_skill(skill_id):
 
     return redirect("/my-skills")
 
+# Edit Skill Route
 @app.route("/edit-skill/<int:skill_id>", methods=["GET", "POST"])
 def edit_skill(skill_id):
     if "user_id" not in session:
@@ -216,29 +226,138 @@ def edit_skill(skill_id):
 
     return redirect("/my-skills")
 
+# View All Skills (with optional category filter)
 @app.route("/all-skills")
 def all_skills():
     category = request.args.get("category")
 
     if category:
         cursor.execute("""
-            SELECT s.*, u.name AS provider_name
+            SELECT s.*, u.name as provider_name
             FROM skills s
             JOIN users u ON s.provider_id = u.user_id
             WHERE s.category=%s
-            ORDER BY s.skill_id DESC
         """, (category,))
     else:
         cursor.execute("""
-            SELECT s.*, u.name AS provider_name
+            SELECT s.*, u.name as provider_name
             FROM skills s
             JOIN users u ON s.provider_id = u.user_id
-            ORDER BY s.skill_id DESC
         """)
 
     skills = cursor.fetchall()
-    return render_template("all_skills.html", skills=skills)
+
+    booked_skills = []
+
+    if "user_id" in session and session["role"] == "user":
+        cursor.execute("""
+            SELECT skill_id FROM bookings 
+            WHERE user_id=%s AND status IN ('pending','accepted')
+        """, (session["user_id"],))
+        booked = cursor.fetchall()
+        booked_skills = [b["skill_id"] for b in booked]
+
+    return render_template("all_skills.html",
+                           skills=skills,
+                           booked_skills=booked_skills)
+
+
+
+# Booking Route
+@app.route("/book/<int:skill_id>", methods=["POST"])
+def book(skill_id):
+
+    if "user_id" not in session or session.get("role") != "user":
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    # Check duplicate booking
+    cursor.execute("""
+        SELECT * FROM bookings
+        WHERE skill_id=%s AND user_id=%s 
+        AND status IN ('pending','accepted')
+    """, (skill_id, user_id))
+
+    existing = cursor.fetchone()
+
+    if existing:
+        return redirect("/all-skills")
+
+    # Get provider id
+    cursor.execute("SELECT provider_id FROM skills WHERE skill_id=%s", (skill_id,))
+    skill = cursor.fetchone()
+
+    if not skill:
+        return redirect("/all-skills")
+
+    provider_id = skill["provider_id"]
+
+    cursor.execute("""
+        INSERT INTO bookings (skill_id, user_id, provider_id)
+        VALUES (%s,%s,%s)
+    """, (skill_id, user_id, provider_id))
+
+    db.commit()
+
+    return redirect("/all-skills")
+
+
+
+# View My Bookings  for user route
+@app.route("/my-bookings")
+def my_bookings():
+    if 'user_id' not in session:
+        return redirect("/login")
+
+    user_id = session['user_id']
+
+    cursor.execute("""
+        SELECT b.*, s.skill_name, u.name as provider_name
+        FROM bookings b
+        JOIN skills s ON b.skill_id = s.skill_id
+        JOIN users u ON b.provider_id = u.user_id
+        WHERE b.user_id=%s
+    """, (user_id,))
+
+    bookings = cursor.fetchall()
+
+    return render_template("my_bookings.html", bookings=bookings)
+
+
+# View Bookings for Providers route
+@app.route("/provider-bookings")
+def provider_bookings():
+    if 'user_id' not in session:
+        return redirect("/login")
+
+    provider_id = session['user_id']
+
+    cursor.execute("""
+        SELECT b.*, s.skill_name, u.name as user_name
+        FROM bookings b
+        JOIN skills s ON b.skill_id = s.skill_id
+        JOIN users u ON b.user_id = u.user_id
+        WHERE b.provider_id=%s
+    """, (provider_id,))
+
+    bookings = cursor.fetchall()
+
+    return render_template("provider_bookings.html", bookings=bookings)
+
+# Update Booking Status (Accept/Reject) for Providers route
+@app.route("/update-booking/<int:booking_id>/<status>")
+def update_booking(booking_id, status):
+    cursor.execute(
+        "UPDATE bookings SET status=%s WHERE booking_id=%s",
+        (status, booking_id)
+    )
+    db.commit()
+    return redirect("/provider-bookings")
+
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+

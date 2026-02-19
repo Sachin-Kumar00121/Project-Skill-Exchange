@@ -1,0 +1,9 @@
+<h2>My Bookings</h2>
+
+{% for booking in bookings %}
+    <div>
+        <strong>{{ booking.skill_name }}</strong><br>
+        Provider: {{ booking.provider_name }}<br>
+        Status: {{ booking.status }}<br><br>
+    </div>
+{% endfor %}

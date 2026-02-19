@@ -9,15 +9,25 @@
 
 <h2>Add Skill</h2>
 
-<form method="POST">
-    <input type="text" name="skill_name" placeholder="Skill Name" required><br><br>
+{% if success %}
+    <p style="color:green; text-align:center;">{{ success }}</p>
+{% endif %}
 
-    <input type="text" name="category" placeholder="Category" required><br><br>
+{% if error %}
+    <p style="color:red; text-align:center;">{{ error }}</p>
+{% endif %}
 
-    <textarea name="description" placeholder="Description" required></textarea><br><br>
+<div class="card">
+    <form method="POST">
+        <input type="text" name="skill_name" placeholder="Skill Name" required>
 
-    <button type="submit">Add Skill</button>
-</form>
+        <input type="text" name="category" placeholder="Category" required>
+
+        <textarea name="description" placeholder="Description" required></textarea>
+
+        <button type="submit" class="btn">Add Skill</button>
+    </form>
+</div>
 
 <br>
 <a href="/dashboard">Back to Dashboard</a>

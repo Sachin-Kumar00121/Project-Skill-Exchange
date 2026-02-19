@@ -11,10 +11,19 @@
 
 <h2>Login</h2>
 
+{% if success %}
+    <p style="color:green; text-align:center;">{{ success }}</p>
+{% endif %}
+
+{% if error %}
+    <p style="color:red; text-align:center;">{{ error }}</p>
+{% endif %}
+
+
 <form method="POST">
     <input type="text" name="identifier" placeholder="Email or Phone" required><br><br>
     
-    <div class="password-container">
+    <div class="password-wrapper">
         <input type="password" name="password" id="password" placeholder="Enter Password" required >
         <span onclick="togglePassword('password')">👁</span>
     </div>
@@ -22,7 +31,7 @@
     <button type="submit">Login</button>
 </form>
 
-<p>New user? <a href="/register">Register</a></p>
+<p>New user? <a href="/">Register</a></p>
 
 </body>
 </html>

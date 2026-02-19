@@ -1,3 +1,4 @@
+
 <h2>All Skills</h2>
 
 <!-- Category Filter -->
@@ -9,10 +10,28 @@
 <hr>
 
 {% for s in skills %}
+
 <p>
 <b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
 Provider: {{ s.provider_name }} <br>
 {{ s.description }}
 </p>
+
+{% if session['role'] == 'user' %}
+
+    {% if s.skill_id in booked_skills %}
+        <p style="color:red;">You have already requested this service</p>
+    {% else %}
+        <form method="POST" action="/book/{{ s.skill_id }}">
+            <button type="submit">Book Now</button>
+        </form>
+    {% endif %}
+
+{% endif %}
+
 <hr>
+
 {% endfor %}
+
+
+
