@@ -11,11 +11,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "skill_exchange_secret"
 
-# ✅ MySQL Connection (apna password yahan set karo)
+# ✅ MySQL Connection 
 db = mysql.connector.connect(
     host=os.getenv("DB_HOST", "localhost"),
     user=os.getenv("DB_USER", "root"),
-    password=os.getenv("DB_PASS", "Sachin@#8057"),   # <-- yahan apna MySQL password
+    password=os.getenv("DB_PASS", "Sachin@#8057"),  
     database=os.getenv("DB_NAME", "skill_exchange"),
     port=int(os.getenv("DB_PORT", "3306"))
 
