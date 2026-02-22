@@ -1,8 +1,10 @@
+import code
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from flask import Flask, render_template, request, redirect, session
-
+from flask import make_response
+from flask import Flask, render_template, request, redirect, session, url_for
+from datetime import datetime
 import re
 
 import mysql.connector
@@ -117,7 +119,7 @@ def login():
             return redirect("/dashboard")
 
         else:
-            return render_template("login.html", error="Invalid login credentials")
+            return render_template("login.html", error="Invalid Password or User not found")
 
     return render_template("login.html")
 
@@ -137,17 +139,33 @@ def logout():
     session.clear()
     return redirect("/login")
 
+
 # Add Skill Route
 @app.route("/add-skill", methods=["GET", "POST"])
 def add_skill():
-    if 'user_id' not in session:
+
+    if "user_id" not in session:
         return redirect("/login")
 
     if request.method == "POST":
-        provider_id = session['user_id']
-        skill_name = request.form['skill_name'].strip()
-        category = request.form['category']
-        description = request.form['description']
+
+        provider_id = session["user_id"]  
+
+        skill_name = request.form["skill_name"].strip()
+        category = request.form["category"]
+        description = request.form["description"]
+        price = request.form["price"]
+        unit = request.form["unit"]
+        experience = request.form["experience"]
+
+        # Safe Photo Handling
+        photo = request.files.get("photo")
+
+        if photo and photo.filename != "":
+            photo_filename = photo.filename
+            photo.save("static/uploads/" + photo_filename)
+        else:
+            photo_filename = None
 
         # Duplicate check
         cursor.execute(
@@ -158,10 +176,12 @@ def add_skill():
         if cursor.fetchone():
             return render_template("add_skill.html", error="You already added this skill.")
 
-        cursor.execute(
-            "INSERT INTO skills (provider_id, skill_name, category, description) VALUES (%s,%s,%s,%s)",
-            (provider_id, skill_name, category, description)
-        )
+        # Insert
+        cursor.execute("""
+            INSERT INTO skills (provider_id, skill_name, category, description, price, unit, experience, photo)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (provider_id, skill_name, category, description, price, unit, experience, photo_filename))
+
         db.commit()
 
         return render_template("add_skill.html", success="Skill Added Successfully")
@@ -186,6 +206,7 @@ def my_skills():
     skills = cursor.fetchall()
     return render_template("my_skills.html", skills=skills)
 
+
 # Delete Skill Route
 @app.route("/delete-skill/<int:skill_id>")
 def delete_skill(skill_id):
@@ -199,6 +220,7 @@ def delete_skill(skill_id):
     db.commit()
 
     return redirect("/my-skills")
+
 
 # Edit Skill Route
 @app.route("/edit-skill/<int:skill_id>", methods=["GET", "POST"])
@@ -226,14 +248,15 @@ def edit_skill(skill_id):
 
     return redirect("/my-skills")
 
+
 # View All Skills (with optional category filter)
 @app.route("/all-skills")
 def all_skills():
 
     category = request.args.get("category")
-
     user_id = session.get("user_id")
     role = session.get("role")
+    hide_skill = session.pop("hide_skill", None)
 
     base_query = """
         SELECT s.*, u.name AS provider_name
@@ -244,12 +267,10 @@ def all_skills():
     conditions = []
     values = []
 
-    # Category filter
     if category:
         conditions.append("s.category=%s")
         values.append(category)
 
-    # 🔴 If logged-in user → hide already booked skills
     if user_id and role == "user":
         conditions.append("""
             s.skill_id NOT IN (
@@ -260,34 +281,55 @@ def all_skills():
         """)
         values.append(user_id)
 
-    # Combine conditions
+    if hide_skill:
+        conditions.append("s.skill_id != %s")
+        values.append(hide_skill)
+
     if conditions:
         base_query += " WHERE " + " AND ".join(conditions)
 
     cursor.execute(base_query, tuple(values))
     skills = cursor.fetchall()
 
-    return render_template("all_skills.html", skills=skills)
+    response = make_response(render_template("all_skills.html", skills=skills))
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 # Booking Route
-@app.route("/book/<int:skill_id>", methods=["POST"])
-def book(skill_id):
+@app.route("/book", methods=["POST"])
+def book():
 
     if "user_id" not in session or session.get("role") != "user":
         return redirect("/login")
 
     user_id = session["user_id"]
 
-    # Check duplicate booking
+    skill_id = request.form["skill_id"]
+    offered_price = request.form["offered_price"]
+    unit = request.form["unit"]
+    service_date = request.form["service_date"]
+
+    hour = request.form.get("hour")
+    minute = request.form.get("minute")
+    ampm = request.form.get("ampm")
+
+    # ✅ Convert to 24hr format for DB
+    time_string = f"{hour}:{minute} {ampm}"
+    time_obj = datetime.strptime(time_string, "%I:%M %p")
+    service_time = time_obj.strftime("%H:%M:%S")  
+
+    # ✅ Duplicate Check
     cursor.execute("""
         SELECT * FROM bookings
-        WHERE skill_id=%s AND user_id=%s 
+        WHERE skill_id=%s 
+        AND user_id=%s
+        AND service_date=%s
         AND status IN ('pending','accepted')
-    """, (skill_id, user_id))
+    """, (skill_id, user_id, service_date))
 
     existing = cursor.fetchone()
-
+    
     if existing:
         return redirect("/all-skills")
 
@@ -300,14 +342,19 @@ def book(skill_id):
 
     provider_id = skill["provider_id"]
 
+    # Insert new booking
     cursor.execute("""
-        INSERT INTO bookings (skill_id, user_id, provider_id)
-        VALUES (%s,%s,%s)
-    """, (skill_id, user_id, provider_id))
+        INSERT INTO bookings
+        (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time)
+        VALUES (%s,%s,%s,%s,%s,%s,%s)
+    """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time))
 
     db.commit()
 
-    return redirect("/all-skills")
+    session["hide_skill"] = skill_id
+
+    return redirect(url_for("all_skills"))
+
 
 # Cancel Booking Route
 @app.route("/cancel-booking/<int:booking_id>", methods=["POST"])
@@ -346,6 +393,10 @@ def my_bookings():
     """, (user_id,))
 
     bookings = cursor.fetchall()
+    for b in bookings:
+     if b["service_time"]:
+            time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
+            b["display_time"] = time_obj.strftime("%I:%M %p")
 
     return render_template("my_bookings.html", bookings=bookings)
 
@@ -367,8 +418,14 @@ def provider_bookings():
     """, (provider_id,))
 
     bookings = cursor.fetchall()
+    
+    for b in bookings:
+     if b["service_time"]:
+        time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
+        b["display_time"] = time_obj.strftime("%I:%M %p")
 
     return render_template("provider_bookings.html", bookings=bookings)
+
 
 # Update Booking Status (Accept/Reject) for Providers route
 @app.route("/update-booking/<int:booking_id>/<status>", methods=["POST"])

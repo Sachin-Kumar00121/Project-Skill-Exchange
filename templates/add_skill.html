@@ -18,17 +18,24 @@
 {% endif %}
 
 <div class="card">
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <input type="text" name="skill_name" placeholder="Skill Name" required>
 
         <input type="text" name="category" placeholder="Category" required>
+        
+        <input type="number" name="price" placeholder="Base Price" required>
+
+        <input type="text" name="unit" placeholder="Unit (per hour / per day)" required>
+
+        <input type="number" name="experience" placeholder="Experience (years)" required>
 
         <textarea name="description" placeholder="Description" required></textarea>
+
+        <input type="file" name="photo" accept="image/*">
 
         <button type="submit" class="btn">Add Skill</button>
     </form>
 </div>
-
 <br>
 <a href="/dashboard">Back to Dashboard</a>
 

@@ -1,14 +1,33 @@
 <h2>My Skills</h2>
 
 {% for s in skills %}
-<p>
-<b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
-{{ s.description }} <br>
-<a href="/edit-skill/{{ s.skill_id }}">Edit</a> |
-<a href="/delete-skill/{{ s.skill_id }}">Delete</a>
-</p>
-<hr>
+
+<div style="border-bottom:1px solid #ccc; padding:15px 0;">
+
+    <h3>{{ s.skill_name }} <br>
+        ({{ s.category }})</h3>
+
+    <p>
+        <strong>Experience:</strong> {{ s.experience }} Years <br>
+        <strong>Price:</strong> ₹{{ s.price }} {{ s.unit }} <br>
+        <strong>Description:</strong> {{ s.description }}
+    </p>
+
+    {% if s.photo %}
+        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}"
+             width="150"
+             style="border-radius:8px; margin-top:10px;">
+    {% endif %}
+
+    <br><br>
+
+    <a href="/edit-skill/{{ s.skill_id }}">Edit</a> |
+    <a href="/delete-skill/{{ s.skill_id }}">Delete</a>
+
+</div>
+
 {% endfor %}
+<br>
 
 <a href="/add-skill">Add New Skill</a>
 <br><br>

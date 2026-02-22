@@ -5,6 +5,10 @@
 <div>
     <strong>{{ booking.skill_name }}</strong><br>
     User: {{ booking.user_name }}<br>
+    <p>Offered Price: ₹{{ booking.offered_price }}</p>
+    <p>Unit: {{ booking.unit }}</p>
+    <p>Date: {{ booking.service_date }}</p>
+    <p>Time: {{ booking.display_time }}</p>
 
     Status:
     {% if booking.status == "pending" %}

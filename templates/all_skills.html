@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Skills</title>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</head>
+<body>
 
 <h2>All Skills</h2>
 
@@ -11,24 +18,80 @@
 
 {% for s in skills %}
 
-<p>
-<b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
-Provider: {{ s.provider_name }} <br>
-{{ s.description }}
-</p>
+<div style="border:1px solid #ccc; padding:15px; margin-bottom:15px;">
 
-{% if session['role'] == 'user' %}
+    <!-- Photo -->
+    {% if s.photo %}
+        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}" 
+             width="150" height="120">
+        <br><br>
+    {% endif %}
 
-   
-        <form method="POST" action="/book/{{ s.skill_id }}">
-            <button type="submit">Book Now</button>
-        </form>
+    <!-- Skill Info -->
+    <b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
+    Provider: {{ s.provider_name }} <br>
+    Experience: {{ s.experience }} years <br>
+    Base Price: ₹{{ s.price }} ({{ s.unit }}) <br><br>
 
-{% endif %}
+    {{ s.description }} <br><br>
 
-<hr>
+    {% if session['role'] == 'user' %}
+        <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')">
+         Book Now
+        </button>
+    {% endif %}
+
+</div>
 
 {% endfor %}
 
 
+<!-- ================= POPUP BOOKING FORM ================= -->
+
+<div id="bookingPopup" 
+     style="display:none; position:fixed; top:20%; left:35%; 
+            background:#fff; padding:20px; border:1px solid black;">
+
+    <h3>Book Service</h3>
+
+    <form method="POST" action="/book">
+
+        <input type="hidden" name="skill_id" id="popupSkillId">
+
+        Offered Price:<br>
+        <input type="number" name="offered_price" id="popupPrice" required>
+        <br><br>
+
+        Unit:<br>
+        <input type="text" name="unit" id="popupUnit" required>
+        <br><br>
+
+        Date:<br>
+        <input type="date" name="service_date" required>
+        <br><br>
+
+       <label>Time:</label><br>
+
+       <input type="number" name="hour" min="1" max="12" required style="width:60px;">:
+       <input type="number" name="minute" min="0" max="59" required style="width:60px;">
+
+         <select name="ampm" required>
+         <option value="AM">AM</option>
+         <option value="PM">PM</option>
+         </select>
+         
+        <br><br>
+
+       <button type="submit" >
+         Send
+       </button>
+       
+       <button type="button" onclick="closePopup()">Cancel</button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
 

@@ -34,3 +34,35 @@ function checkStrength() {
         message.style.color = "green";
     }
 }
+
+function openPopup(skillId, price, unit) {
+    document.getElementById("bookingPopup").style.display = "block";
+    document.getElementById("popupSkillId").value = skillId;
+    document.getElementById("popupPrice").value = price;
+    document.getElementById("popupUnit").value = unit;
+}
+
+function closePopup() {
+    document.getElementById("bookingPopup").style.display = "none";
+}
+
+// 🔹 Back button popup fix
+window.onpageshow = function(event) {
+    if (event.persisted) {
+        let popup = document.getElementById("bookingPopup");
+        if (popup) {
+            popup.style.display = "none";
+        }
+    }
+};
+
+
+// 🔹 24hr to 12hr converter (अगर future में जरूरत हो)
+function convertTo12Hour(time24) {
+    let [hours, minutes] = time24.split(":");
+    hours = parseInt(hours);
+    let ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return hours + ":" + minutes + " " + ampm;
+}
