@@ -1,9 +1,40 @@
 <h2>My Bookings</h2>
 
-{% for booking in bookings %}
-    <div>
-        <strong>{{ booking.skill_name }}</strong><br>
-        Provider: {{ booking.provider_name }}<br>
-        Status: {{ booking.status }}<br><br>
-    </div>
+{% for b in bookings %}
+
+<p>
+<b>{{ b.skill_name }}</b><br>
+Provider: {{ b.provider_name }}<br>
+
+Status:
+{% if b.status == "pending" %}
+    <span style="color:orange; font-weight:bold;">Pending</span>
+
+{% elif b.status == "accepted" %}
+    <span style="color:green; font-weight:bold;">Accepted</span>
+
+{% elif b.status == "rejected" %}
+    <span style="color:red; font-weight:bold;">Rejected by Provider</span>
+
+{% elif b.status == "cancelled" %}
+    <span style="color:gray; font-weight:bold;">Cancelled by You</span>
+{% endif %}
+</p>
+
+{% if b.status == "accepted" %}
+<p style="color:green; font-weight:bold;">
+Your booking has been accepted by the provider.
+</p>
+{% endif %}
+
+{% if b.status in ["pending", "accepted"] %}
+<form method="POST" action="/cancel-booking/{{ b.booking_id }}">
+    <button type="submit" style="background:red;color:white;">
+        Cancel Booking
+    </button>
+</form>
+{% endif %}
+
+<hr>
+
 {% endfor %}

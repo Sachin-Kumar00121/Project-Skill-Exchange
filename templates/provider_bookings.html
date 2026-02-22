@@ -1,15 +1,58 @@
 <h2>Booking Requests</h2>
 
 {% for booking in bookings %}
-    <div>
-        <strong>{{ booking.skill_name }}</strong><br>
-        User: {{ booking.user_name }}<br>
-        Status: {{ booking.status }}<br>
 
-        {% if booking.status == 'pending' %}
-            <a href="/update-booking/{{ booking.booking_id }}/accepted">Accept</a>
-            <a href="/update-booking/{{ booking.booking_id }}/rejected">Reject</a>
-        {% endif %}
-        <br><br>
-    </div>
+<div>
+    <strong>{{ booking.skill_name }}</strong><br>
+    User: {{ booking.user_name }}<br>
+
+    Status:
+    {% if booking.status == "pending" %}
+        <span style="color:orange; font-weight:bold;">Pending</span>
+
+    {% elif booking.status == "accepted" %}
+        <span style="color:green; font-weight:bold;">Accepted</span>
+
+    {% elif booking.status == "rejected" %}
+        <span style="color:red; font-weight:bold;">Rejected</span>
+
+    {% elif booking.status == "cancelled" %}
+        <span style="color:gray; font-weight:bold;">Cancelled by User</span>
+    {% endif %}
+    <br><br>
+     {% if booking.status == "accepted" %}
+    <p style="color:green; font-weight:bold;">
+You accepted this booking.
+</p>
+{% endif %}
+
+{% if booking.status == "rejected" %}
+<p style="color:red; font-weight:bold;">
+You rejected this booking.
+</p>
+{% endif %}
+
+{% if booking.status == "cancelled" %}
+<p style="color:gray; font-weight:bold;">
+User cancelled this booking.
+</p>
+{% endif %}
+
+    {% if booking.status == "pending" %}
+        <form method="POST" action="/update-booking/{{ booking.booking_id }}/accepted">
+            <button type="submit" style="background:green;color:white;">
+                Accept
+            </button>
+        </form>
+
+        <form method="POST" action="/update-booking/{{ booking.booking_id }}/rejected">
+            <button type="submit" style="background:red;color:white;">
+                Reject
+            </button>
+        </form>
+    {% endif %}
+
+    <hr>
+</div>
+
 {% endfor %}

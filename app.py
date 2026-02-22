@@ -229,38 +229,45 @@ def edit_skill(skill_id):
 # View All Skills (with optional category filter)
 @app.route("/all-skills")
 def all_skills():
+
     category = request.args.get("category")
 
-    if category:
-        cursor.execute("""
-            SELECT s.*, u.name as provider_name
-            FROM skills s
-            JOIN users u ON s.provider_id = u.user_id
-            WHERE s.category=%s
-        """, (category,))
-    else:
-        cursor.execute("""
-            SELECT s.*, u.name as provider_name
-            FROM skills s
-            JOIN users u ON s.provider_id = u.user_id
-        """)
+    user_id = session.get("user_id")
+    role = session.get("role")
 
+    base_query = """
+        SELECT s.*, u.name AS provider_name
+        FROM skills s
+        JOIN users u ON s.provider_id = u.user_id
+    """
+
+    conditions = []
+    values = []
+
+    # Category filter
+    if category:
+        conditions.append("s.category=%s")
+        values.append(category)
+
+    # 🔴 If logged-in user → hide already booked skills
+    if user_id and role == "user":
+        conditions.append("""
+            s.skill_id NOT IN (
+                SELECT skill_id FROM bookings
+                WHERE user_id=%s
+                AND status IN ('pending','accepted')
+            )
+        """)
+        values.append(user_id)
+
+    # Combine conditions
+    if conditions:
+        base_query += " WHERE " + " AND ".join(conditions)
+
+    cursor.execute(base_query, tuple(values))
     skills = cursor.fetchall()
 
-    booked_skills = []
-
-    if "user_id" in session and session["role"] == "user":
-        cursor.execute("""
-            SELECT skill_id FROM bookings 
-            WHERE user_id=%s AND status IN ('pending','accepted')
-        """, (session["user_id"],))
-        booked = cursor.fetchall()
-        booked_skills = [b["skill_id"] for b in booked]
-
-    return render_template("all_skills.html",
-                           skills=skills,
-                           booked_skills=booked_skills)
-
+    return render_template("all_skills.html", skills=skills)
 
 
 # Booking Route
@@ -302,6 +309,24 @@ def book(skill_id):
 
     return redirect("/all-skills")
 
+# Cancel Booking Route
+@app.route("/cancel-booking/<int:booking_id>", methods=["POST"])
+def cancel_booking(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    cursor.execute("""
+        UPDATE bookings 
+        SET status='cancelled'
+        WHERE booking_id=%s 
+        AND user_id=%s 
+        AND status IN ('pending','accepted')
+    """, (booking_id, session["user_id"]))
+
+    db.commit()
+
+    return redirect("/my-bookings")
 
 
 # View My Bookings  for user route
@@ -346,15 +371,24 @@ def provider_bookings():
     return render_template("provider_bookings.html", bookings=bookings)
 
 # Update Booking Status (Accept/Reject) for Providers route
-@app.route("/update-booking/<int:booking_id>/<status>")
+@app.route("/update-booking/<int:booking_id>/<status>", methods=["POST"])
 def update_booking(booking_id, status):
-    cursor.execute(
-        "UPDATE bookings SET status=%s WHERE booking_id=%s",
-        (status, booking_id)
-    )
-    db.commit()
-    return redirect("/provider-bookings")
 
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if status not in ["accepted", "rejected"]:
+        return redirect("/provider-bookings")
+
+    cursor.execute("""
+        UPDATE bookings
+        SET status=%s
+        WHERE booking_id=%s AND provider_id=%s
+    """, (status, booking_id, session["user_id"]))
+
+    db.commit()
+
+    return redirect("/provider-bookings")
 
 
 if __name__ == "__main__":

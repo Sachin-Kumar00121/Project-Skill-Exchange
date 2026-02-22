@@ -19,13 +19,10 @@ Provider: {{ s.provider_name }} <br>
 
 {% if session['role'] == 'user' %}
 
-    {% if s.skill_id in booked_skills %}
-        <p style="color:red;">You have already requested this service</p>
-    {% else %}
+   
         <form method="POST" action="/book/{{ s.skill_id }}">
             <button type="submit">Book Now</button>
         </form>
-    {% endif %}
 
 {% endif %}
 
