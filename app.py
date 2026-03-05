@@ -345,9 +345,9 @@ def book():
     # Insert new booking
     cursor.execute("""
         INSERT INTO bookings
-        (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time)
-        VALUES (%s,%s,%s,%s,%s,%s,%s)
-    """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time))
+        (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, remark)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, request.form.get("remark")))
 
     db.commit()
 

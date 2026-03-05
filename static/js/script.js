@@ -44,9 +44,10 @@ function openPopup(skillId, price, unit) {
 
 function closePopup() {
     document.getElementById("bookingPopup").style.display = "none";
+
 }
 
-// 🔹 Back button popup fix
+// 🔹 Back button popup
 window.onpageshow = function(event) {
     if (event.persisted) {
         let popup = document.getElementById("bookingPopup");
@@ -57,7 +58,7 @@ window.onpageshow = function(event) {
 };
 
 
-// 🔹 24hr to 12hr converter (अगर future में जरूरत हो)
+// 🔹 24hr to 12hr converter 
 function convertTo12Hour(time24) {
     let [hours, minutes] = time24.split(":");
     hours = parseInt(hours);

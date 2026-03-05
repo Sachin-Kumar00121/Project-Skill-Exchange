@@ -9,6 +9,7 @@
     <p>Unit: {{ booking.unit }}</p>
     <p>Date: {{ booking.service_date }}</p>
     <p>Time: {{ booking.display_time }}</p>
+    <p>Remark: {{ booking.remark }}</p>
 
     Status:
     {% if booking.status == "pending" %}
@@ -40,6 +41,7 @@ You rejected this booking.
 <p style="color:gray; font-weight:bold;">
 User cancelled this booking.
 </p>
+
 {% endif %}
 
     {% if booking.status == "pending" %}
@@ -60,3 +62,5 @@ User cancelled this booking.
 </div>
 
 {% endfor %}
+
+<a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a>

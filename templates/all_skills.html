@@ -49,8 +49,17 @@
 <!-- ================= POPUP BOOKING FORM ================= -->
 
 <div id="bookingPopup" 
-     style="display:none; position:fixed; top:20%; left:35%; 
-            background:#fff; padding:20px; border:1px solid black;">
+     style="display:none;
+     position:fixed;
+     top:50%;
+     left:50%;
+     transform:translate(-50%, -50%);
+     background:white;
+     padding:25px;
+     border-radius:10px;
+     box-shadow:0 0 15px rgba(0,0,0,0.3);
+     width:350px;
+     z-index:1000;">
 
     <h3>Book Service</h3>
 
@@ -81,7 +90,9 @@
          </select>
          
         <br><br>
-
+        <label>Remark:</label>
+        <textarea name="remark" rows="3" placeholder="Write any special request..." textarea="Justify" 
+         style="width:100%; padding:8px; border-radius:6px; margin-top:5px;"></textarea>
        <button type="submit" >
          Send
        </button>
@@ -91,6 +102,8 @@
     </form>
 
 </div>
+
+<a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a> 
 
 </body>
 </html>
