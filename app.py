@@ -249,29 +249,42 @@ def edit_skill(skill_id):
     return redirect("/my-skills")
 
 
-# View All Skills (with optional category filter)
+# View All Skills 
 @app.route("/all-skills")
 def all_skills():
 
     category = request.args.get("category")
+    search = request.args.get("search")   
+
     user_id = session.get("user_id")
     role = session.get("role")
     hide_skill = session.pop("hide_skill", None)
 
     base_query = """
-    SELECT s.*, u.name AS provider_name,
-    (SELECT AVG(rating) FROM feedback WHERE provider_id = s.provider_id) AS avg_rating
+    SELECT s.*, 
+           u.name AS provider_name,
+           (SELECT AVG(rating) 
+            FROM feedback 
+            WHERE provider_id = s.provider_id) AS avg_rating
     FROM skills s
     JOIN users u ON s.provider_id = u.user_id
-"""
+    """
 
     conditions = []
     values = []
 
+    # Category filter
     if category:
         conditions.append("s.category=%s")
         values.append(category)
 
+    # 🔎 Search filter 
+    if search:
+        conditions.append("(s.skill_name LIKE %s OR u.name LIKE %s)")
+        values.append(f"%{search}%")
+        values.append(f"%{search}%")
+
+    # Hide already booked skills
     if user_id and role == "user":
         conditions.append("""
             s.skill_id NOT IN (
@@ -282,6 +295,7 @@ def all_skills():
         """)
         values.append(user_id)
 
+    # Hide skill after booking
     if hide_skill:
         conditions.append("s.skill_id != %s")
         values.append(hide_skill)
@@ -292,10 +306,11 @@ def all_skills():
     cursor.execute(base_query, tuple(values))
     skills = cursor.fetchall()
 
-    response = make_response(render_template("all_skills.html", skills=skills))
+    response = make_response(
+        render_template("all_skills.html", skills=skills)
+    )
     response.headers["Cache-Control"] = "no-store"
     return response
-
 
 # Booking Route 
 @app.route("/book", methods=["POST"])

@@ -55,4 +55,8 @@ Comment: {{ f.comment }}<br>
 </div>
 
 {% endfor %}
-<a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a>
+{% if request.args %}
+    <a href="/my-feedbacks">← Back</a>
+{% else %}
+    <a href="/dashboard">← Back</a>
+{% endif %}

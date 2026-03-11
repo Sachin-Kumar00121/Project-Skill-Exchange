@@ -6,7 +6,29 @@
 </head>
 <body>
 
-<h2>All Skills</h2>
+<div style="display:flex; justify-content:space-between; align-items:center;">
+
+    <h2>All Skills</h2>
+
+    <form method="GET" action="/all-skills" style="display:flex; gap:8px;">
+        <input type="text"
+               name="search"
+               placeholder="Search skill or provider..."
+               value="{{ request.args.get('search','') }}"
+               style="padding:6px 10px; border-radius:6px; border:1px solid #ccc;">
+
+        <button type="submit"
+                style="padding:6px 12px;
+                       background:#2563eb;
+                       color:white;
+                       border:none;
+                       border-radius:6px;
+                       cursor:pointer;">
+            🔍 Search
+        </button>
+    </form>
+
+</div>
 
 <!-- Category Filter -->
 <a href="/all-skills">All</a> |
@@ -126,7 +148,11 @@
 
 </div>
 
-<a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a> 
+{% if request.args %}
+    <a href="/all-skills">← Back</a>
+{% else %}
+    <a href="/dashboard">← Back</a>
+{% endif %}
 
 </body>
 </html>
