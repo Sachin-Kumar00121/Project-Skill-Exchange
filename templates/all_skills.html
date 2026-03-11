@@ -18,7 +18,7 @@
 
 {% for s in skills %}
 
-<div style="border:1px solid #ccc; padding:15px; margin-bottom:15px;">
+<div  class="skill-card" style="border:1px solid #ccc; padding:15px; margin-bottom:15px;">
 
     <!-- Photo -->
     {% if s.photo %}
@@ -28,13 +28,36 @@
     {% endif %}
 
     <!-- Skill Info -->
+
+    <div class="rating-badge">
+    <!-- ⭐ Star Display -->
+        {% for i in range(1,6) %}
+            {% if i <= (s.avg_rating | int) %}
+                <span style="color:gold;">★</span>
+            {% else %}
+                <span style="color:gray;">★</span>
+            {% endif %}
+        {% endfor %}
+
+        ({{ s.avg_rating | round(1) if s.avg_rating else 0 }})
+
+        <!-- 🏆 Top Rated Badge -->
+        {% if s.avg_rating and s.avg_rating >= 4.5 %}
+            <span style="background:gold;color:black;
+                         padding:3px 6px;border-radius:5px;
+                         font-size:11px;margin-left:6px;">
+                🏆 Top Rated
+            </span>
+        {% endif %}
+
+     </div>
+
     <b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
     Provider: {{ s.provider_name }} <br>
     Experience: {{ s.experience }} years <br>
     Base Price: ₹{{ s.price }} ({{ s.unit }}) <br><br>
-
     {{ s.description }} <br><br>
-
+    
     {% if session['role'] == 'user' %}
         <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')">
          Book Now

@@ -1,0 +1,30 @@
+<h2>Give Feedback</h2>
+
+<form method="POST">
+
+    <label>Rating:</label><br>
+    <select name="rating" required>
+        <option value="">Select Rating</option>
+        <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+        <option value="4">⭐⭐⭐⭐ (4)</option>
+        <option value="3">⭐⭐⭐ (3)</option>
+        <option value="2">⭐⭐ (2)</option>
+        <option value="1">⭐ (1)</option>
+    </select>
+
+    <br><br>
+
+    <label>Comment:</label><br>
+    <textarea name="comment" rows="4" required 
+              style="width:300px;padding:8px;"></textarea>
+
+    <br><br>
+
+    <button type="submit"
+        style="background:#28a745;color:white;
+               padding:8px 15px;border:none;
+               border-radius:6px;">
+        Submit Feedback
+    </button>
+
+</form>

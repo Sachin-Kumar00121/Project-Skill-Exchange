@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from flask import make_response
 from flask import Flask, render_template, request, redirect, session, url_for
-from datetime import datetime
+from datetime import datetime, time, date
 import re
 
 import mysql.connector
@@ -259,10 +259,11 @@ def all_skills():
     hide_skill = session.pop("hide_skill", None)
 
     base_query = """
-        SELECT s.*, u.name AS provider_name
-        FROM skills s
-        JOIN users u ON s.provider_id = u.user_id
-    """
+    SELECT s.*, u.name AS provider_name,
+    (SELECT AVG(rating) FROM feedback WHERE provider_id = s.provider_id) AS avg_rating
+    FROM skills s
+    JOIN users u ON s.provider_id = u.user_id
+"""
 
     conditions = []
     values = []
@@ -296,7 +297,7 @@ def all_skills():
     return response
 
 
-# Booking Route
+# Booking Route 
 @app.route("/book", methods=["POST"])
 def book():
 
@@ -379,36 +380,67 @@ def cancel_booking(booking_id):
 # View My Bookings  for user route
 @app.route("/my-bookings")
 def my_bookings():
+
     if 'user_id' not in session:
         return redirect("/login")
 
     user_id = session['user_id']
 
     cursor.execute("""
-        SELECT b.*, s.skill_name, u.name as provider_name
+        SELECT b.*, 
+               s.skill_name,
+               u.name as provider_name
         FROM bookings b
         JOIN skills s ON b.skill_id = s.skill_id
         JOIN users u ON b.provider_id = u.user_id
         WHERE b.user_id=%s
+        ORDER BY b.booking_id DESC
     """, (user_id,))
 
     bookings = cursor.fetchall()
+
+    # Date & Time Convert
     for b in bookings:
-     if b["service_time"]:
-            time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
-            b["display_time"] = time_obj.strftime("%I:%M %p")
+
+        # -------- DATE --------
+        if b.get("service_date"):
+            if isinstance(b["service_date"], date):
+                b["display_date"] = b["service_date"].strftime("%d %b %Y")
+            else:
+                dt_obj = datetime.strptime(str(b["service_date"]), "%Y-%m-%d")
+                b["display_date"] = dt_obj.strftime("%d %b %Y")
+
+        # -------- TIME --------
+        if b.get("service_time"):
+            if isinstance(b["service_time"], time):
+                b["display_time"] = b["service_time"].strftime("%I:%M %p")
+            else:
+                time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
+                b["display_time"] = time_obj.strftime("%I:%M %p")
+        else:
+            b["display_time"] = "Not Set"
+
+        # -------- FEEDBACK CHECK --------
+        cursor.execute(
+            "SELECT feedback_id FROM feedback WHERE booking_id=%s",
+            (b["booking_id"],)
+        )
+        feedback = cursor.fetchone()
+
+        b["feedback_given"] = True if feedback else False
 
     return render_template("my_bookings.html", bookings=bookings)
-
 
 # View Bookings for Providers route
 @app.route("/provider-bookings")
 def provider_bookings():
+
     if 'user_id' not in session:
         return redirect("/login")
 
     provider_id = session['user_id']
 
+    # Booking fetch
     cursor.execute("""
         SELECT b.*, s.skill_name, u.name as user_name
         FROM bookings b
@@ -418,14 +450,85 @@ def provider_bookings():
     """, (provider_id,))
 
     bookings = cursor.fetchall()
-    
+
+    # ✅ Date & Time Convert (FIXED INDENTATION)
     for b in bookings:
-     if b["service_time"]:
-        time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
-        b["display_time"] = time_obj.strftime("%I:%M %p")
 
-    return render_template("provider_bookings.html", bookings=bookings)
+        # Date Convert
+        if b.get("service_date"):
+            if isinstance(b["service_date"], date):
+                b["display_date"] = b["service_date"].strftime("%d %b %Y")
+            else:
+                dt_obj = datetime.strptime(str(b["service_date"]), "%Y-%m-%d")
+                b["display_date"] = dt_obj.strftime("%d %b %Y")
 
+        # Time Convert
+        if b.get("service_time"):
+            if isinstance(b["service_time"], time):
+                b["display_time"] = b["service_time"].strftime("%I:%M %p")
+            else:
+                time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
+                b["display_time"] = time_obj.strftime("%I:%M %p")
+
+    # ⭐ Average Rating
+    cursor.execute("""
+        SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews
+        FROM feedback
+        WHERE provider_id=%s
+    """, (provider_id,))
+    rating_data = cursor.fetchone()
+
+    # ⭐ All Reviews
+    cursor.execute("""
+        SELECT f.*, 
+               u.name as user_name,
+               s.skill_name,
+               b.service_date,
+               b.service_time
+        FROM feedback f
+        JOIN users u ON f.user_id = u.user_id
+        JOIN bookings b ON f.booking_id = b.booking_id
+        JOIN skills s ON f.skill_id = s.skill_id
+        WHERE f.provider_id=%s
+        ORDER BY f.created_at DESC
+    """, (provider_id,))
+
+    reviews = cursor.fetchall()
+
+    # ✅ Reviews Date & Time Convert (FIXED)
+    for r in reviews:
+
+        # Booking Date
+        if r.get("service_date"):
+            if isinstance(r["service_date"], date):
+                r["display_date"] = r["service_date"].strftime("%d %b %Y")
+            else:
+                dt_obj = datetime.strptime(str(r["service_date"]), "%Y-%m-%d")
+                r["display_date"] = dt_obj.strftime("%d %b %Y")
+
+        # Booking Time
+        if r.get("service_time"):
+            if isinstance(r["service_time"], time):
+                r["display_time"] = r["service_time"].strftime("%I:%M %p")
+            else:
+                time_obj = datetime.strptime(str(r["service_time"]), "%H:%M:%S")
+                r["display_time"] = time_obj.strftime("%I:%M %p")
+
+        # Feedback Created Time
+        if r.get("created_at"):
+            dt_obj = r["created_at"]
+            if isinstance(dt_obj, datetime):
+                r["display_created_at"] = dt_obj.strftime("%d %b %Y • %I:%M %p").lstrip("0")
+            else:
+                dt_obj = datetime.strptime(str(dt_obj), "%Y-%m-%d %H:%M:%S")
+                r["display_created_at"] = dt_obj.strftime("%d %b %Y • %I:%M %p").lstrip("0")
+
+    return render_template(
+        "provider_bookings.html",
+        bookings=bookings,
+        rating_data=rating_data,
+        reviews=reviews
+    )
 
 # Update Booking Status (Accept/Reject) for Providers route
 @app.route("/update-booking/<int:booking_id>/<status>", methods=["POST"])
@@ -434,7 +537,8 @@ def update_booking(booking_id, status):
     if "user_id" not in session:
         return redirect("/login")
 
-    if status not in ["accepted", "rejected"]:
+
+    if status not in ["accepted", "rejected", "completed"]:
         return redirect("/provider-bookings")
 
     cursor.execute("""
@@ -447,6 +551,183 @@ def update_booking(booking_id, status):
 
     return redirect("/provider-bookings")
 
+# Mark Completed Route for Providers
+@app.route("/mark-completed/<int:booking_id>", methods=["POST"])
+def mark_completed(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    cursor.execute("""
+        UPDATE bookings 
+        SET status='completed'
+        WHERE booking_id=%s AND provider_id=%s
+    """, (booking_id, session["user_id"]))
+
+    db.commit()
+
+    return redirect("/provider-bookings")
+
+# Give Feedback Route
+@app.route("/give-feedback/<int:booking_id>", methods=["GET", "POST"])
+def give_feedback(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    # booking verify (completed only)
+    cursor.execute("""
+        SELECT * FROM bookings
+        WHERE booking_id=%s 
+        AND user_id=%s 
+        AND status='completed'
+    """, (booking_id, user_id))
+
+    booking = cursor.fetchone()
+
+    if not booking:
+        return redirect("/my-bookings")
+
+    # Already submitted check
+    cursor.execute(
+        "SELECT feedback_id FROM feedback WHERE booking_id=%s",
+        (booking_id,)
+    )
+    existing = cursor.fetchone()
+
+    if existing:
+        return redirect("/my-bookings")
+
+    if request.method == "POST":
+        rating = request.form["rating"]
+        comment = request.form["comment"]
+
+        cursor.execute("""
+            INSERT INTO feedback
+            (booking_id, skill_id, user_id, provider_id, rating, comment)
+            VALUES (%s,%s,%s,%s,%s,%s)
+        """, (
+            booking_id,
+            booking["skill_id"],
+            user_id,
+            booking["provider_id"],
+            rating,
+            comment
+        ))
+
+        # mark feedback given
+        cursor.execute("""
+            UPDATE bookings
+            SET feedback_given = 1
+            WHERE booking_id=%s
+        """, (booking_id,))
+
+        db.commit()
+
+        return redirect("/my-bookings")
+
+    return render_template("give_feedback.html", booking=booking)
+
+#my feedback route
+@app.route("/my-feedbacks")
+def my_feedbacks():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    sort = request.args.get("sort")
+    rating_filter = request.args.get("rating")
+
+    query = """
+        SELECT f.*, s.skill_name, u.name as provider_name
+        FROM feedback f
+        JOIN skills s ON f.skill_id = s.skill_id
+        JOIN users u ON f.provider_id = u.user_id
+        WHERE f.user_id = %s
+    """
+
+    values = [user_id]
+
+    if rating_filter:
+        query += " AND f.rating = %s"
+        values.append(rating_filter)
+
+    if sort == "rating_high":
+        query += " ORDER BY f.rating DESC"
+    elif sort == "rating_low":
+        query += " ORDER BY f.rating ASC"
+    elif sort == "latest":
+        query += " ORDER BY f.created_at DESC"
+    elif sort == "oldest":
+        query += " ORDER BY f.created_at ASC"
+
+    cursor.execute(query, tuple(values))
+    feedbacks = cursor.fetchall()
+
+    # Time convert for user feedback list
+    for f in feedbacks:
+     if f.get("created_at"):
+
+        dt_obj = f["created_at"]
+
+        if isinstance(dt_obj, datetime):
+            f["display_date"] = dt_obj.strftime("%d %b %Y")
+            f["display_time"] = dt_obj.strftime("%I:%M %p").lstrip("0")
+        else:
+            dt_obj = datetime.strptime(str(dt_obj), "%Y-%m-%d %H:%M:%S")
+            f["display_date"] = dt_obj.strftime("%d %b %Y")
+            f["display_time"] = dt_obj.strftime("%I:%M %p").lstrip("0")
+
+    return render_template("my_feedbacks.html", feedbacks=feedbacks)
+
+# Delete Feedback route
+@app.route("/delete-feedback/<int:feedback_id>", methods=["POST"])
+def delete_feedback(feedback_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    cursor.execute("""
+        DELETE FROM feedback
+        WHERE feedback_id=%s AND user_id=%s
+    """, (feedback_id, session["user_id"]))
+
+    db.commit()
+
+    return redirect("/my-feedbacks")
+
+#Edit Feedback route
+@app.route("/edit-feedback/<int:feedback_id>", methods=["GET","POST"])
+def edit_feedback(feedback_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+        rating = request.form["rating"]
+        comment = request.form["comment"]
+
+        cursor.execute("""
+            UPDATE feedback
+            SET rating=%s, comment=%s
+            WHERE feedback_id=%s AND user_id=%s
+        """, (rating, comment, feedback_id, session["user_id"]))
+
+        db.commit()
+        return redirect("/my-feedbacks")
+
+    cursor.execute("""
+        SELECT * FROM feedback
+        WHERE feedback_id=%s AND user_id=%s
+    """, (feedback_id, session["user_id"]))
+
+    feedback = cursor.fetchone()
+
+    return render_template("edit_feedback.html", feedback=feedback)
 
 if __name__ == "__main__":
     app.run(debug=True)

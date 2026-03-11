@@ -1,13 +1,29 @@
+<h2>My Rating Overview</h2>
+
+<div style="padding:15px;border:1px solid #ccc;border-radius:8px;margin-bottom:20px;">
+    
+    <h3>
+        ⭐ Average Rating:
+        {{ rating_data.avg_rating | round(1) if rating_data.avg_rating else 0 }}
+    </h3>
+
+    <p>
+        📊 Total Reviews:
+        {{ rating_data.total_reviews if rating_data.total_reviews else 0 }}
+    </p>
+
+</div>
+
 <h2>Booking Requests</h2>
 
 {% for booking in bookings %}
 
-<div>
+<div  style="padding:15px;border:1px solid #ccc;border-radius:8px;margin-bottom:20px;">
     <strong>{{ booking.skill_name }}</strong><br>
     User: {{ booking.user_name }}<br>
     <p>Offered Price: ₹{{ booking.offered_price }}</p>
     <p>Unit: {{ booking.unit }}</p>
-    <p>Date: {{ booking.service_date }}</p>
+    <p>Date: {{ booking.display_date }}</p>
     <p>Time: {{ booking.display_time }}</p>
     <p>Remark: {{ booking.remark }}</p>
 
@@ -23,26 +39,37 @@
 
     {% elif booking.status == "cancelled" %}
         <span style="color:gray; font-weight:bold;">Cancelled by User</span>
+
+    {% elif booking.status == "completed" %}
+    <span style="color:blue; font-weight:bold;">Completed</span>    
+
     {% endif %}
     <br><br>
+
      {% if booking.status == "accepted" %}
-    <p style="color:green; font-weight:bold;">
-You accepted this booking.
-</p>
-{% endif %}
+      <p style="color:green; font-weight:bold;">
+      You accepted this booking.
+      </p>
+     {% endif %}
 
-{% if booking.status == "rejected" %}
-<p style="color:red; font-weight:bold;">
-You rejected this booking.
-</p>
-{% endif %}
+    {% if booking.status == "completed" %}
+    <p style="color:blue; font-weight:bold;">
+     You completed this booking.
+    </p>
+    {% endif %}
 
-{% if booking.status == "cancelled" %}
-<p style="color:gray; font-weight:bold;">
-User cancelled this booking.
-</p>
 
-{% endif %}
+    {% if booking.status == "rejected" %}
+     <p style="color:red; font-weight:bold;">
+     You rejected this booking.
+    </p>
+    {% endif %}
+
+    {% if booking.status == "cancelled" %}
+     <p style="color:gray; font-weight:bold;">
+    User cancelled this booking.
+    </p>
+    {% endif %}
 
     {% if booking.status == "pending" %}
         <form method="POST" action="/update-booking/{{ booking.booking_id }}/accepted">
@@ -58,9 +85,45 @@ User cancelled this booking.
         </form>
     {% endif %}
 
+
+   {% if booking.status == "accepted" %}
+    <form method="POST" action="/mark-completed/{{ booking.booking_id }}">
+        <button type="submit" 
+                style="background:#007bff;color:white;padding:6px 10px;border:none;border-radius:5px;">
+            Mark as Completed
+        </button>
+    </form>
+
+   {% endif %}
+
     <hr>
 </div>
 
 {% endfor %}
+
+<hr>
+
+<h3>Customer Reviews</h3>
+
+{% if reviews %}
+    {% for r in reviews %}
+        <div style="padding:15px;border:1px solid #ddd;border-radius:8px;margin-bottom:15px;">
+
+            <strong>{{ r.skill_name }}</strong><br>
+            📅 {{ r.display_date }} | ⏰ {{ r.display_time }} <br><br>
+
+            👤 {{ r.user_name }} <br>
+            ⭐ Rating: {{ r.rating }} <br><br>
+
+            💬 "{{ r.comment }}" <br>
+
+            <small style="color:#777;font-size:13px;">
+             • {{ r.display_created_at }}
+            </small>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No reviews yet.</p>
+{% endif %}
 
 <a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a>

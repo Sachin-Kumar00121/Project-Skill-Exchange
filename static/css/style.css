@@ -135,3 +135,26 @@ body {
 .back-btn:hover {
     background:#222;
 }
+
+.skill-card {
+    position: relative;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    background: #fff;
+}
+
+.rating-badge {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    color: white;
+    border: 1px solid #eee;
+    background: linear-gradient(45deg, #ffc107, #ff9800);
+}
