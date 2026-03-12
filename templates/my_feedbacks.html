@@ -1,0 +1,62 @@
+<h2>My Feedbacks</h2>
+
+<!-- Sorting -->
+<a href="?sort=rating_high">⭐ High</a> |
+<a href="?sort=rating_low">⭐ Low</a> |
+<a href="?sort=latest">📅 Latest</a> |
+<a href="?sort=oldest">📅 Oldest</a>
+
+<hr>
+
+{% for f in feedbacks %}
+
+<div style="border:1px solid #ddd;padding:15px;margin-bottom:15px;border-radius:8px;">
+
+<b>{{ f.skill_name }}</b><br>
+Provider: {{ f.provider_name }}<br>
+Rating: ⭐ {{ f.rating }}<br>
+Comment: {{ f.comment }}<br>
+<strong>Date:</strong> {{ f.display_date }} 
+<br>
+<strong>Time:</strong> {{ f.display_time }}
+
+<br><br>
+
+<div style="margin-top:8px; display:flex; gap:8px;">
+
+    <a href="/edit-feedback/{{ f.feedback_id }}"
+       style="background:#1e40ff;
+              color:white;
+              padding:6px 12px;
+              border-radius:6px;
+              text-decoration:none;
+              font-weight:bold;">
+        Edit
+    </a>
+
+    <form method="POST"
+          action="/delete-feedback/{{ f.feedback_id }}"
+          onsubmit="return confirm('Are you sure you want to delete this feedback?');"
+          style="margin:0;">
+        <button type="submit"
+                style="background:#ff1e1e;
+                       color:white;
+                       padding:6px 12px;
+                       border:none;
+                       border-radius:6px;
+                       font-weight:bold;
+                       cursor:pointer;">
+            Delete
+        </button>
+    </form>
+
+</div>
+
+</div>
+
+{% endfor %}
+{% if request.args %}
+    <a href="/my-feedbacks">← Back</a>
+{% else %}
+    <a href="/dashboard">← Back</a>
+{% endif %}

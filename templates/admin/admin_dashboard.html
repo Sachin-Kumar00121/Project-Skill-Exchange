@@ -1,0 +1,22 @@
+{% extends "admin/admin_base.html" %}
+{% block content %}
+
+<h1>Admin Dashboard</h1>
+
+<div class="card">
+    <h3>Total Users: {{ total_users }}</h3>
+</div>
+
+<div class="card">
+    <h3>Total Providers: {{ total_providers }}</h3>
+</div>
+
+<div class="card">
+    <h3>Total Bookings: {{ total_bookings }}</h3>
+</div>
+
+<div class="card">
+    <h3>Total Revenue: ₹{{ total_revenue }}</h3>
+</div>
+
+{% endblock %}

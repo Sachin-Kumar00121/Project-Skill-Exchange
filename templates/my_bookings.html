@@ -1,10 +1,20 @@
 <h2>My Bookings</h2>
 
 {% for b in bookings %}
+ 
+<div style="border:1px solid #ccc;padding:12px;margin-bottom:15px;border-radius:6px;">
+    <h3>{{ b.skill_name }}</h3>
+    <p><strong>Provider:</strong> {{ b.provider_name }}</p>
 
-<p>
-<b>{{ b.skill_name }}</b><br>
-Provider: {{ b.provider_name }}<br>
+    <p><strong>Offered Price:</strong> ₹{{ b.offered_price }}</p>
+    <p><strong>Unit:</strong> {{ b.unit }}</p>
+
+    <p><strong>Date:</strong> {{ b.display_date }}</p>
+    <p><strong>Time:</strong> {{ b.display_time }}</p>
+
+    {% if b.remark %}
+    <p><strong>Remark:</strong> {{ b.remark }}</p>
+    {% endif %}
 
 Status:
 {% if b.status == "pending" %}
@@ -18,6 +28,12 @@ Status:
 
 {% elif b.status == "cancelled" %}
     <span style="color:gray; font-weight:bold;">Cancelled by You</span>
+
+{% elif b.status == "completed" and b.feedback_given == 0 %}
+    <span style="color:red;">Not Given Feedback</span>
+
+{% elif b.status == "completed" and b.feedback_given == 1 %}
+    <span style="color:green;">Completed</span>
 {% endif %}
 </p>
 
@@ -34,7 +50,20 @@ Your booking has been accepted by the provider.
     </button>
 </form>
 {% endif %}
+ 
+{% if b.status == "completed" and not b.feedback_given %}
+    <a href="/give-feedback/{{ b.booking_id }}" 
+       style="background:#28a745;color:white;
+              padding:6px 10px;border-radius:5px;
+              text-decoration:none;">
+        Give Feedback
+    </a>
+{% endif %}
 
 <hr>
 
+</div>
+ 
 {% endfor %}
+<a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a>
+

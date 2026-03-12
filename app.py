@@ -4,9 +4,8 @@ from dotenv import load_dotenv
 load_dotenv()
 from flask import make_response
 from flask import Flask, render_template, request, redirect, session, url_for
-from datetime import datetime
+from datetime import datetime, time, date
 import re
-
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -23,6 +22,292 @@ db = mysql.connector.connect(
 
 )
 cursor = db.cursor(dictionary=True)
+
+def admin_required():
+    if session.get("role") != "admin":
+        return False
+    return True
+
+
+# Admin login route
+@app.route("/admin-login", methods=["GET","POST"])
+def admin_login():
+
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        cursor.execute("SELECT * FROM users WHERE email=%s AND role='admin'", (email,))
+        admin = cursor.fetchone()
+
+        if admin and check_password_hash(admin["password"], password):
+            session.clear()
+            session["user_id"] = admin["user_id"]
+            session["role"] = "admin"
+            return redirect("/admin-dashboard")
+        else:
+            return render_template("admin/admin_login.html", error="Invalid Login Credentials....")
+
+    return render_template("admin/admin_login.html")
+
+#Admin Passwoerd Change Route
+@app.route("/admin-change-password", methods=["GET","POST"])
+def admin_change_password():
+
+    if session.get("role") != "admin":
+        return redirect("/login")
+
+    if request.method == "POST":
+        old_password = request.form["old_password"]
+        new_password = request.form["new_password"]
+
+        cursor.execute("SELECT * FROM users WHERE user_id=%s", (session["user_id"],))
+        admin = cursor.fetchone()
+
+        if not check_password_hash(admin["password"], old_password):
+            return render_template("admin/admin_change_password.html", error="Old password incorrect")
+
+        new_hash = generate_password_hash(new_password)
+
+        cursor.execute("UPDATE users SET password=%s WHERE user_id=%s",
+                       (new_hash, session["user_id"]))
+        db.commit()
+
+        return render_template("admin/admin_change_password.html",
+                               message="Password Updated Successfully")
+
+    return render_template("admin/admin_change_password.html")
+
+
+#Admin dashboard route
+@app.route("/admin-dashboard")
+def admin_dashboard():
+
+    if not admin_required():
+        return redirect("/login")
+
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='user'")
+    total_users = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='provider'")
+    total_providers = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) as total FROM bookings")
+    total_bookings = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT SUM(offered_price) as revenue FROM bookings WHERE status='completed'")
+    revenue = cursor.fetchone()["revenue"] or 0
+
+    return render_template(
+        "admin/admin_dashboard.html",
+        total_users=total_users,
+        total_providers=total_providers,
+        total_bookings=total_bookings,
+        total_revenue=revenue
+    )
+
+
+#Admin Manage users route
+@app.route("/admin-users")
+def admin_users():
+
+    search = request.args.get("search")
+
+    query = "SELECT * FROM users WHERE role='user'"
+    values = []
+
+    if search:
+        query += " AND (name LIKE %s OR email LIKE %s)"
+        values.append(f"%{search}%")
+        values.append(f"%{search}%")
+
+    cursor.execute(query, tuple(values))
+    users = cursor.fetchall()
+
+    return render_template("admin/admin_users.html",
+                           users=users)
+
+
+
+# Admin Toggle User Block/Unblock Route
+@app.route("/admin-toggle-user/<int:user_id>")
+def admin_toggle_user(user_id):
+
+    if session.get("role") != "admin":
+        return redirect("/login")
+
+    reason = request.args.get("reason", "Policy Violation")
+
+    cursor.execute("SELECT status FROM users WHERE user_id=%s", (user_id,))
+    user = cursor.fetchone()
+
+    if user["status"] == "active":
+        cursor.execute("""
+            UPDATE users
+            SET status='blocked',
+                block_reason=%s,
+                blocked_at=%s
+            WHERE user_id=%s
+        """, (reason, datetime.now(), user_id))
+    else:
+        cursor.execute("""
+            UPDATE users
+            SET status='active',
+                block_reason=NULL,
+                blocked_at=NULL
+            WHERE user_id=%s
+        """, (user_id,))
+
+    db.commit()
+    return redirect(request.referrer)
+
+
+
+#Admin Delete User Route
+@app.route("/admin-delete-user/<int:user_id>")
+def admin_delete_user(user_id):
+
+    #  Delete bookings first
+    cursor.execute("DELETE FROM bookings WHERE user_id=%s", (user_id,))
+
+    #  Delete feedback if exists
+    cursor.execute("DELETE FROM feedback WHERE user_id=%s", (user_id,))
+
+    #  Delete skills if provider
+    cursor.execute("DELETE FROM skills WHERE provider_id=%s", (user_id,))
+
+    #  Now delete user
+    cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
+
+    db.commit()
+
+    return redirect("/admin-users")
+
+
+# Admin Manage Providers Route with Search
+@app.route("/admin-providers")
+def admin_providers():
+    search = request.args.get("search")
+
+    query = "SELECT * FROM users WHERE role='provider'"
+    values = []
+
+    if search:
+        query += " AND (name LIKE %s OR email LIKE %s)"
+        values.append(f"%{search}%")
+        values.append(f"%{search}%")
+
+    cursor.execute(query, tuple(values))
+    providers = cursor.fetchall()
+
+    return render_template("admin/admin_providers.html",
+                           providers=providers)
+
+
+# Admin Manage Bookings Route
+@app.route("/admin-bookings")
+def admin_bookings():
+
+    user = request.args.get("user")
+    provider = request.args.get("provider")
+    skill = request.args.get("skill")
+    status = request.args.get("status")
+
+    query = """
+    SELECT b.*, 
+           u.name as user_name,
+           p.name as provider_name,
+           s.skill_name
+    FROM bookings b
+    JOIN users u ON b.user_id = u.user_id
+    JOIN users p ON b.provider_id = p.user_id
+    JOIN skills s ON b.skill_id = s.skill_id
+    WHERE 1=1
+    """
+
+    values = []
+
+    if user:
+        query += " AND u.name LIKE %s"
+        values.append(f"%{user}%")
+
+    if provider:
+        query += " AND p.name LIKE %s"
+        values.append(f"%{provider}%")
+
+    if skill:
+        query += " AND s.skill_name LIKE %s"
+        values.append(f"%{skill}%")
+
+    if status:
+        query += " AND b.status=%s"
+        values.append(status)
+
+    cursor.execute(query, tuple(values))
+    bookings = cursor.fetchall()
+
+    return render_template("admin/admin_bookings.html",
+                           bookings=bookings)
+
+
+# Admin Manage Skills Route
+@app.route("/admin-skills")
+def admin_skills():
+
+    category = request.args.get("category")
+    skill = request.args.get("skill")
+    provider = request.args.get("provider")
+    price = request.args.get("price")
+
+    query = """
+    SELECT s.*, u.name as provider_name
+    FROM skills s
+    JOIN users u ON s.provider_id = u.user_id
+    WHERE 1=1
+    """
+
+    values = []
+
+    if category:
+        query += " AND s.category LIKE %s"
+        values.append(f"%{category}%")
+
+    if skill:
+        query += " AND s.skill_name LIKE %s"
+        values.append(f"%{skill}%")
+
+    if provider:
+        query += " AND u.name LIKE %s"
+        values.append(f"%{provider}%")
+
+    if price:
+        query += " AND s.base_price <= %s"
+        values.append(price)
+
+    cursor.execute(query, tuple(values))
+    skills = cursor.fetchall()
+
+    return render_template("admin/admin_skills.html", skills=skills)
+
+
+# Admin Manage Reviews Route
+@app.route("/admin-reviews")
+def admin_reviews():
+
+    if not admin_required():
+        return redirect("/login")
+
+    cursor.execute("""
+        SELECT f.*, u.name as user_name, s.skill_name
+        FROM feedback f
+        JOIN users u ON f.user_id=u.user_id
+        JOIN skills s ON f.skill_id=s.skill_id
+        ORDER BY f.created_at DESC
+    """)
+
+    reviews = cursor.fetchall()
+
+    return render_template("admin/admin_reviews.html", reviews=reviews)
 
 
 # ✅ Home Page
@@ -102,7 +387,7 @@ def login():
         identifier = request.form["identifier"]
         password = request.form["password"]
 
-        # email 
+        # Email or Phone check
         if "@" in identifier:
             cursor.execute("SELECT * FROM users WHERE email=%s", (identifier,))
         else:
@@ -110,27 +395,113 @@ def login():
 
         user = cursor.fetchone()
 
-        
         if user and check_password_hash(user["password"], password):
+
+        
+            if user["role"] == "admin":
+                return render_template("login.html",
+                                       error="Admin must login from Admin Panel")
+
+
+            if user.get("status") == "blocked":
+                return render_template("login.html",
+                                      error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
+
+        
             session["user_id"] = user["user_id"]
             session["user_name"] = user["name"]
-            session["role"] = user["role"]   
+            session["role"] = user["role"]
 
             return redirect("/dashboard")
 
         else:
-            return render_template("login.html", error="Invalid Password or User not found")
+            return render_template("login.html",
+                                   error="Invalid Password or User not found")
 
     return render_template("login.html")
 
+import re
+from werkzeug.security import generate_password_hash, check_password_hash
+
+#✅ Change Password Route
+@app.route("/change-password", methods=["GET", "POST"])
+def change_password():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    if request.method == "POST":
+
+        old_password = request.form["old_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        cursor.execute("SELECT password FROM users WHERE user_id=%s", (user_id,))
+        user = cursor.fetchone()
+
+        # Old password verify
+        if not check_password_hash(user["password"], old_password):
+            return render_template("change_password.html",
+                                   error="Old password is incorrect")
+
+        # Password match check
+        if new_password != confirm_password:
+            return render_template("change_password.html",
+                                   error="Passwords do not match")
+
+        # Strong password rule
+        if len(new_password) < 8:
+            return render_template("change_password.html",
+                                   error="Password must be at least 8 characters")
+
+        if not re.search(r"[A-Z]", new_password):
+            return render_template("change_password.html",
+                                   error="Password must contain uppercase letter")
+
+        if not re.search(r"[a-z]", new_password):
+            return render_template("change_password.html",
+                                   error="Password must contain lowercase letter")
+
+        if not re.search(r"[0-9]", new_password):
+            return render_template("change_password.html",
+                                   error="Password must contain a number")
+
+        # Update password
+        new_hash = generate_password_hash(new_password)
+
+        cursor.execute(
+            "UPDATE users SET password=%s WHERE user_id=%s",
+            (new_hash, user_id)
+        )
+        db.commit()
+
+        return render_template("change_password.html",
+                               success="Password updated successfully")
+
+    return render_template("change_password.html")
 
 
 # ✅ Dashboard 
 @app.route("/dashboard")
 def dashboard():
+
     if "user_id" not in session:
         return redirect("/login")
-    return render_template("dashboard.html")
+
+    cursor.execute("SELECT status, block_reason FROM users WHERE user_id=%s",
+                   (session["user_id"],))
+    user = cursor.fetchone()
+
+    if user["status"] == "blocked":
+        session.clear()
+        return render_template("login.html",
+                               error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
+
+    return render_template("dashboard.html",
+                           user_status=user["status"])
+
 
 
 # ✅ Logout
@@ -249,28 +620,42 @@ def edit_skill(skill_id):
     return redirect("/my-skills")
 
 
-# View All Skills (with optional category filter)
+# View All Skills 
 @app.route("/all-skills")
 def all_skills():
 
     category = request.args.get("category")
+    search = request.args.get("search")   
+
     user_id = session.get("user_id")
     role = session.get("role")
     hide_skill = session.pop("hide_skill", None)
 
     base_query = """
-        SELECT s.*, u.name AS provider_name
-        FROM skills s
-        JOIN users u ON s.provider_id = u.user_id
+    SELECT s.*, 
+           u.name AS provider_name,
+           (SELECT AVG(rating) 
+            FROM feedback 
+            WHERE provider_id = s.provider_id) AS avg_rating
+    FROM skills s
+    JOIN users u ON s.provider_id = u.user_id
     """
 
     conditions = []
     values = []
 
+    # Category filter
     if category:
         conditions.append("s.category=%s")
         values.append(category)
 
+    # 🔎 Search filter 
+    if search:
+        conditions.append("(s.skill_name LIKE %s OR u.name LIKE %s)")
+        values.append(f"%{search}%")
+        values.append(f"%{search}%")
+
+    # Hide already booked skills
     if user_id and role == "user":
         conditions.append("""
             s.skill_id NOT IN (
@@ -281,6 +666,7 @@ def all_skills():
         """)
         values.append(user_id)
 
+    # Hide skill after booking
     if hide_skill:
         conditions.append("s.skill_id != %s")
         values.append(hide_skill)
@@ -291,12 +677,13 @@ def all_skills():
     cursor.execute(base_query, tuple(values))
     skills = cursor.fetchall()
 
-    response = make_response(render_template("all_skills.html", skills=skills))
+    response = make_response(
+        render_template("all_skills.html", skills=skills)
+    )
     response.headers["Cache-Control"] = "no-store"
     return response
 
-
-# Booking Route
+# Booking Route 
 @app.route("/book", methods=["POST"])
 def book():
 
@@ -345,9 +732,9 @@ def book():
     # Insert new booking
     cursor.execute("""
         INSERT INTO bookings
-        (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time)
-        VALUES (%s,%s,%s,%s,%s,%s,%s)
-    """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time))
+        (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, remark)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, request.form.get("remark")))
 
     db.commit()
 
@@ -379,36 +766,67 @@ def cancel_booking(booking_id):
 # View My Bookings  for user route
 @app.route("/my-bookings")
 def my_bookings():
+
     if 'user_id' not in session:
         return redirect("/login")
 
     user_id = session['user_id']
 
     cursor.execute("""
-        SELECT b.*, s.skill_name, u.name as provider_name
+        SELECT b.*, 
+               s.skill_name,
+               u.name as provider_name
         FROM bookings b
         JOIN skills s ON b.skill_id = s.skill_id
         JOIN users u ON b.provider_id = u.user_id
         WHERE b.user_id=%s
+        ORDER BY b.booking_id DESC
     """, (user_id,))
 
     bookings = cursor.fetchall()
+
+    # Date & Time Convert
     for b in bookings:
-     if b["service_time"]:
-            time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
-            b["display_time"] = time_obj.strftime("%I:%M %p")
+
+        # -------- DATE --------
+        if b.get("service_date"):
+            if isinstance(b["service_date"], date):
+                b["display_date"] = b["service_date"].strftime("%d %b %Y")
+            else:
+                dt_obj = datetime.strptime(str(b["service_date"]), "%Y-%m-%d")
+                b["display_date"] = dt_obj.strftime("%d %b %Y")
+
+        # -------- TIME --------
+        if b.get("service_time"):
+            if isinstance(b["service_time"], time):
+                b["display_time"] = b["service_time"].strftime("%I:%M %p")
+            else:
+                time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
+                b["display_time"] = time_obj.strftime("%I:%M %p")
+        else:
+            b["display_time"] = "Not Set"
+
+        # -------- FEEDBACK CHECK --------
+        cursor.execute(
+            "SELECT feedback_id FROM feedback WHERE booking_id=%s",
+            (b["booking_id"],)
+        )
+        feedback = cursor.fetchone()
+
+        b["feedback_given"] = True if feedback else False
 
     return render_template("my_bookings.html", bookings=bookings)
-
 
 # View Bookings for Providers route
 @app.route("/provider-bookings")
 def provider_bookings():
+
     if 'user_id' not in session:
         return redirect("/login")
 
     provider_id = session['user_id']
 
+    # Booking fetch
     cursor.execute("""
         SELECT b.*, s.skill_name, u.name as user_name
         FROM bookings b
@@ -418,14 +836,85 @@ def provider_bookings():
     """, (provider_id,))
 
     bookings = cursor.fetchall()
-    
+
+    # ✅ Date & Time Convert (FIXED INDENTATION)
     for b in bookings:
-     if b["service_time"]:
-        time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
-        b["display_time"] = time_obj.strftime("%I:%M %p")
 
-    return render_template("provider_bookings.html", bookings=bookings)
+        # Date Convert
+        if b.get("service_date"):
+            if isinstance(b["service_date"], date):
+                b["display_date"] = b["service_date"].strftime("%d %b %Y")
+            else:
+                dt_obj = datetime.strptime(str(b["service_date"]), "%Y-%m-%d")
+                b["display_date"] = dt_obj.strftime("%d %b %Y")
 
+        # Time Convert
+        if b.get("service_time"):
+            if isinstance(b["service_time"], time):
+                b["display_time"] = b["service_time"].strftime("%I:%M %p")
+            else:
+                time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
+                b["display_time"] = time_obj.strftime("%I:%M %p")
+
+    # ⭐ Average Rating
+    cursor.execute("""
+        SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews
+        FROM feedback
+        WHERE provider_id=%s
+    """, (provider_id,))
+    rating_data = cursor.fetchone()
+
+    # ⭐ All Reviews
+    cursor.execute("""
+        SELECT f.*, 
+               u.name as user_name,
+               s.skill_name,
+               b.service_date,
+               b.service_time
+        FROM feedback f
+        JOIN users u ON f.user_id = u.user_id
+        JOIN bookings b ON f.booking_id = b.booking_id
+        JOIN skills s ON f.skill_id = s.skill_id
+        WHERE f.provider_id=%s
+        ORDER BY f.created_at DESC
+    """, (provider_id,))
+
+    reviews = cursor.fetchall()
+
+    # ✅ Reviews Date & Time Convert (FIXED)
+    for r in reviews:
+
+        # Booking Date
+        if r.get("service_date"):
+            if isinstance(r["service_date"], date):
+                r["display_date"] = r["service_date"].strftime("%d %b %Y")
+            else:
+                dt_obj = datetime.strptime(str(r["service_date"]), "%Y-%m-%d")
+                r["display_date"] = dt_obj.strftime("%d %b %Y")
+
+        # Booking Time
+        if r.get("service_time"):
+            if isinstance(r["service_time"], time):
+                r["display_time"] = r["service_time"].strftime("%I:%M %p")
+            else:
+                time_obj = datetime.strptime(str(r["service_time"]), "%H:%M:%S")
+                r["display_time"] = time_obj.strftime("%I:%M %p")
+
+        # Feedback Created Time
+        if r.get("created_at"):
+            dt_obj = r["created_at"]
+            if isinstance(dt_obj, datetime):
+                r["display_created_at"] = dt_obj.strftime("%d %b %Y • %I:%M %p").lstrip("0")
+            else:
+                dt_obj = datetime.strptime(str(dt_obj), "%Y-%m-%d %H:%M:%S")
+                r["display_created_at"] = dt_obj.strftime("%d %b %Y • %I:%M %p").lstrip("0")
+
+    return render_template(
+        "provider_bookings.html",
+        bookings=bookings,
+        rating_data=rating_data,
+        reviews=reviews
+    )
 
 # Update Booking Status (Accept/Reject) for Providers route
 @app.route("/update-booking/<int:booking_id>/<status>", methods=["POST"])
@@ -434,7 +923,8 @@ def update_booking(booking_id, status):
     if "user_id" not in session:
         return redirect("/login")
 
-    if status not in ["accepted", "rejected"]:
+
+    if status not in ["accepted", "rejected", "completed"]:
         return redirect("/provider-bookings")
 
     cursor.execute("""
@@ -447,6 +937,183 @@ def update_booking(booking_id, status):
 
     return redirect("/provider-bookings")
 
+# Mark Completed Route for Providers
+@app.route("/mark-completed/<int:booking_id>", methods=["POST"])
+def mark_completed(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    cursor.execute("""
+        UPDATE bookings 
+        SET status='completed'
+        WHERE booking_id=%s AND provider_id=%s
+    """, (booking_id, session["user_id"]))
+
+    db.commit()
+
+    return redirect("/provider-bookings")
+
+# Give Feedback Route
+@app.route("/give-feedback/<int:booking_id>", methods=["GET", "POST"])
+def give_feedback(booking_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    # booking verify (completed only)
+    cursor.execute("""
+        SELECT * FROM bookings
+        WHERE booking_id=%s 
+        AND user_id=%s 
+        AND status='completed'
+    """, (booking_id, user_id))
+
+    booking = cursor.fetchone()
+
+    if not booking:
+        return redirect("/my-bookings")
+
+    # Already submitted check
+    cursor.execute(
+        "SELECT feedback_id FROM feedback WHERE booking_id=%s",
+        (booking_id,)
+    )
+    existing = cursor.fetchone()
+
+    if existing:
+        return redirect("/my-bookings")
+
+    if request.method == "POST":
+        rating = request.form["rating"]
+        comment = request.form["comment"]
+
+        cursor.execute("""
+            INSERT INTO feedback
+            (booking_id, skill_id, user_id, provider_id, rating, comment)
+            VALUES (%s,%s,%s,%s,%s,%s)
+        """, (
+            booking_id,
+            booking["skill_id"],
+            user_id,
+            booking["provider_id"],
+            rating,
+            comment
+        ))
+
+        # mark feedback given
+        cursor.execute("""
+            UPDATE bookings
+            SET feedback_given = 1
+            WHERE booking_id=%s
+        """, (booking_id,))
+
+        db.commit()
+
+        return redirect("/my-bookings")
+
+    return render_template("give_feedback.html", booking=booking)
+
+#my feedback route
+@app.route("/my-feedbacks")
+def my_feedbacks():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    sort = request.args.get("sort")
+    rating_filter = request.args.get("rating")
+
+    query = """
+        SELECT f.*, s.skill_name, u.name as provider_name
+        FROM feedback f
+        JOIN skills s ON f.skill_id = s.skill_id
+        JOIN users u ON f.provider_id = u.user_id
+        WHERE f.user_id = %s
+    """
+
+    values = [user_id]
+
+    if rating_filter:
+        query += " AND f.rating = %s"
+        values.append(rating_filter)
+
+    if sort == "rating_high":
+        query += " ORDER BY f.rating DESC"
+    elif sort == "rating_low":
+        query += " ORDER BY f.rating ASC"
+    elif sort == "latest":
+        query += " ORDER BY f.created_at DESC"
+    elif sort == "oldest":
+        query += " ORDER BY f.created_at ASC"
+
+    cursor.execute(query, tuple(values))
+    feedbacks = cursor.fetchall()
+
+    # Time convert for user feedback list
+    for f in feedbacks:
+     if f.get("created_at"):
+
+        dt_obj = f["created_at"]
+
+        if isinstance(dt_obj, datetime):
+            f["display_date"] = dt_obj.strftime("%d %b %Y")
+            f["display_time"] = dt_obj.strftime("%I:%M %p").lstrip("0")
+        else:
+            dt_obj = datetime.strptime(str(dt_obj), "%Y-%m-%d %H:%M:%S")
+            f["display_date"] = dt_obj.strftime("%d %b %Y")
+            f["display_time"] = dt_obj.strftime("%I:%M %p").lstrip("0")
+
+    return render_template("my_feedbacks.html", feedbacks=feedbacks)
+
+# Delete Feedback route
+@app.route("/delete-feedback/<int:feedback_id>", methods=["POST"])
+def delete_feedback(feedback_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    cursor.execute("""
+        DELETE FROM feedback
+        WHERE feedback_id=%s AND user_id=%s
+    """, (feedback_id, session["user_id"]))
+
+    db.commit()
+
+    return redirect("/my-feedbacks")
+
+#Edit Feedback route
+@app.route("/edit-feedback/<int:feedback_id>", methods=["GET","POST"])
+def edit_feedback(feedback_id):
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+        rating = request.form["rating"]
+        comment = request.form["comment"]
+
+        cursor.execute("""
+            UPDATE feedback
+            SET rating=%s, comment=%s
+            WHERE feedback_id=%s AND user_id=%s
+        """, (rating, comment, feedback_id, session["user_id"]))
+
+        db.commit()
+        return redirect("/my-feedbacks")
+
+    cursor.execute("""
+        SELECT * FROM feedback
+        WHERE feedback_id=%s AND user_id=%s
+    """, (feedback_id, session["user_id"]))
+
+    feedback = cursor.fetchone()
+
+    return render_template("edit_feedback.html", feedback=feedback)
 
 if __name__ == "__main__":
     app.run(debug=True)

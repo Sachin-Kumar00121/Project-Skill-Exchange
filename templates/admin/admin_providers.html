@@ -1,0 +1,82 @@
+{% extends "admin/admin_base.html" %}
+{% block content %}
+
+<div class="page-header">
+    <h2>Manage Providers</h2>
+</div>
+
+<div class="filter-bar">
+    <form method="GET">
+        <input type="text" name="search" placeholder="Search provider...">
+        <button type="submit">Search</button>
+    </form>
+</div>
+ 
+<div class="card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th style="text-align:center;">Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for p in providers %}
+            <tr>
+                <td>{{ p.user_id }}</td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.email if p.email else "Not Provided" }}</td>
+
+                <td>
+                    {% if p.status == "blocked" %}
+                        <span class="status blocked">Blocked</span>
+                    {% else %}
+                        <span class="status active">Active</span>
+                    {% endif %}
+                </td>
+
+                <td style="text-align:center;">
+                    <div class="action-buttons">
+
+                        <a href="/admin-toggle-user/{{ p.user_id }}"
+                           onclick="return confirm('Are you sure?');">
+                            {% if p.status == "blocked" %}
+                                <button class="btn btn-success">Unblock</button>
+                            {% else %}
+                                <button class="btn btn-warning">Block</button>
+                            {% endif %}
+                        </a>
+
+                        <a href="/admin-delete-user/{{ p.user_id }}"
+                           onclick="return confirm('Delete this provider?');">
+                            <button class="btn btn-danger">Delete</button>
+                        </a>
+
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+
+            {% if providers|length == 0 %}
+            <tr>
+                <td colspan="5" style="text-align:center; padding:20px;">
+                    No Providers Found
+                </td>
+            </tr>
+            {% endif %}
+
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-bottom:15px;">
+    <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
+</div>
+
+{% endblock %}
+
+

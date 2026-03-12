@@ -10,7 +10,37 @@
 <body>
 
 <h2>Welcome {{ session['user_name'] }}</h2>
-<p>Role: {{ session['role'] }}</p>
+
+<div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom:15px;">
+
+    <div>
+        <span style="background:#e2e8f0;padding:4px 8px;border-radius:15px;font-size:13px;">
+         <strong>Role:</strong>  {{ session.role }}
+        </span>
+
+    </div>
+
+    <div>
+
+        <span style="background:#e2e8f0;padding:4px 8px;border-radius:15px;font-size:13px;">
+         <strong>Account Status:</strong>
+        </span>
+       
+        {% if user_status == "blocked" %}
+            <span style="background:#fee2e2;color:#991b1b;padding:5px 10px;border-radius:20px;font-size:13px;">
+                Blocked
+            </span>
+        {% else %}
+            <span style="background:#dcfce7;color:#044d20;padding:5px 10px;border-radius:20px;font-size:13px;">
+                Active
+            </span>
+     
+        {% endif %}
+    </div>
+
+</div>
+
+
 
 <hr>
 
@@ -18,30 +48,75 @@
 
     <h3>Provider Panel</h3>
 
-    <a href="/add-skill">➕ Add Skill</a>
+    <a href="/add-skill" style="display:inline-block;
+          padding:8px 15px;
+          background:#290fa0;
+          color:rgb(255, 255, 255);
+          border-radius:6px;
+          text-decoration:none;">➕ Add Skill</a>
     <br><br>
 
-    <a href="/my-skills">📋 My Skills</a>
+    <a href="/my-skills" style="display:inline-block;
+          padding:8px 15px;
+          background:#290fa0;
+          color:rgb(255, 255, 255);
+          border-radius:6px;
+          text-decoration:none;">📋 My Skills</a>
     <br><br>
 
-    <a href="/provider-bookings">📦 View Booking Requests</a>
+    <a href="/provider-bookings" style="display:inline-block;
+          padding:8px 15px;
+          background:#290fa0;
+          color:rgb(255, 255, 255);
+          border-radius:6px;
+          text-decoration:none;">📦 View Booking Requests</a>
     <br><br>
 
 {% else %}
 
     <h3>User Panel</h3>
-
-    <a href="/all-skills">🔎 Browse Services</a>
+     
+    <a href="/all-skills" style="display:inline-block;
+          padding:8px 15px;
+          background:#290fa0;
+          color:rgb(255, 255, 255);
+          border-radius:6px;
+          text-decoration:none;" >🔎 Browse Services</a>
     <br><br>
 
-    <a href="/my-bookings">📦 My Bookings</a>
+    <a href="/my-bookings" style="display:inline-block;
+          padding:8px 15px;
+          background:#290fa0;
+          color:rgb(255, 255, 255);
+          border-radius:6px;
+          text-decoration:none;">📦 My Bookings</a>
     <br><br>
 
+    <a href="/my-feedbacks"  style="display:inline-block;
+          padding:8px 15px;
+          background:#290fa0;
+          color:rgb(255, 255, 255);
+          border-radius:6px;
+          text-decoration:none;">⭐ My Feedbacks</a><br><br>
+    <br><br>
 {% endif %}
 
 <hr>
+<div class="action-row">
 
-<a href="/logout">🚪 Logout</a>
+    <a href="/change-password" class="btn btn-warning">
+        🔐 Change Password
+    </a>
+
+    <a href="/logout" class="btn btn-warning" style="display:inline-block;
+          padding:8px 15px;
+          background:#d80303d3;
+          color:rgb(12, 12, 10);
+          border-radius:6px;
+          text-decoration:none;">🚪 Logout</a>
+
+</div>
+
 
 </body>
 </html>
