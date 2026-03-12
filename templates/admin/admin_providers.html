@@ -7,8 +7,9 @@
 
 <div class="filter-bar">
     <form method="GET">
-        <input type="text" name="search" placeholder="Search provider...">
+        <input type="text" name="search" placeholder="Search provider..." value="{{ request.args.get('search','') }}">
         <button type="submit">Search</button>
+        <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
     </form>
 </div>
  
@@ -73,7 +74,7 @@
     </table>
 </div>
 
-<div style="margin-bottom:15px;">
+<div style="margin-top:20px;">
     <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
 </div>
 

@@ -6,13 +6,14 @@
 <div class="filter-bar">
 <form method="GET">
 
-<input type="text" name="category" placeholder="Category">
-<input type="text" name="skill" placeholder="Skill Name">
-<input type="text" name="provider" placeholder="Provider">
-<input type="number" name="price" placeholder="Max Price">
+<input type="text" name="category" placeholder="Category" value="{{ request.args.get('category','') }}">
+<input type="text" name="skill" placeholder="Skill Name" value="{{ request.args.get('skill','') }}">
+<input type="text" name="provider" placeholder="Provider" value="{{ request.args.get('provider','') }}">
+<input type="number" name="price" placeholder="Search Price" value="{{ request.args.get('price','') }}">
 
 <button type="submit">Filter</button>
 
+<a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
 </form>
 </div>
 
@@ -34,7 +35,7 @@
     <td>{{ s.skill_name }}</td>
     <td>{{ s.provider_name }}</td>
     <td>{{ s.category }}</td>
-    <td>₹ {{ s.base_price }}</td>
+    <td>₹ {{ "{:,.0f}".format(s.price) }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -42,9 +43,8 @@
 </table>
 </div>
 
-<div style="margin-bottom:15px;">
+<div style="margin-top:20px;">
     <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
 </div>
-
 
 {% endblock %}

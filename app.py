@@ -162,7 +162,6 @@ def admin_toggle_user(user_id):
     return redirect(request.referrer)
 
 
-
 #Admin Delete User Route
 @app.route("/admin-delete-user/<int:user_id>")
 def admin_delete_user(user_id):
@@ -281,9 +280,12 @@ def admin_skills():
         values.append(f"%{provider}%")
 
     if price:
-        query += " AND s.base_price <= %s"
-        values.append(price)
-
+      try:
+        search_price = float(price)
+        query += " AND s.price = %s"
+        values.append(search_price)
+      except ValueError:
+        pass
     cursor.execute(query, tuple(values))
     skills = cursor.fetchall()
 
@@ -294,17 +296,44 @@ def admin_skills():
 @app.route("/admin-reviews")
 def admin_reviews():
 
-    if not admin_required():
-        return redirect("/login")
+    user = request.args.get("user")
+    skill = request.args.get("skill")
+    provider = request.args.get("provider")
+    rating = request.args.get("rating")
+    comment = request.args.get("comment")
 
-    cursor.execute("""
-        SELECT f.*, u.name as user_name, s.skill_name
-        FROM feedback f
-        JOIN users u ON f.user_id=u.user_id
-        JOIN skills s ON f.skill_id=s.skill_id
-        ORDER BY f.created_at DESC
-    """)
+    query = """
+    SELECT r.*, u.name as user_name, s.skill_name, p.name as provider_name
+    FROM feedback r
+    JOIN users u ON r.user_id = u.user_id
+    JOIN skills s ON r.skill_id = s.skill_id
+    JOIN users p ON s.provider_id = p.user_id
+    WHERE 1=1
+    """
 
+    values = []
+
+    if user:
+        query += " AND u.name LIKE %s"
+        values.append(f"%{user}%")
+
+    if skill:
+        query += " AND s.skill_name LIKE %s"
+        values.append(f"%{skill}%")
+
+    if provider:
+        query += " AND p.name LIKE %s"
+        values.append(f"%{provider}%")
+
+    if rating:
+        query += " AND r.rating = %s"
+        values.append(rating)
+
+    if comment:
+        query += " AND r.comment LIKE %s"
+        values.append(f"%{comment}%")
+
+    cursor.execute(query, tuple(values))
     reviews = cursor.fetchall()
 
     return render_template("admin/admin_reviews.html", reviews=reviews)

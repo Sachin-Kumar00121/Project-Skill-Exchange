@@ -5,11 +5,11 @@
 
 <div class="filter-bar">
 <form method="GET">
-    <input type="text" name="search" placeholder="Search user...">
+    <input type="text" name="search" placeholder="Search user..."  value="{{ request.args.get('search','') }}">
     <button type="submit">Search</button>
+    <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
 </form>
 </div>
-
 
 <div class="card">
 
@@ -63,7 +63,7 @@
 </table>
 </div>
 
-<div style="margin-bottom:15px;">
+<div style="margin-top:20px;">
     <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
 </div>
 

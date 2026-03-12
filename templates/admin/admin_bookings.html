@@ -6,9 +6,9 @@
 <div class="filter-bar">
 <form method="GET">
 
-<input type="text" name="user" placeholder="User">
-<input type="text" name="provider" placeholder="Provider">
-<input type="text" name="skill" placeholder="Skill">
+<input type="text" name="user" placeholder="User" value="{{ request.args.get('user','') }}">
+<input type="text" name="provider" placeholder="Provider" value="{{ request.args.get('provider','') }}">
+<input type="text" name="skill" placeholder="Skill" value="{{ request.args.get('skill','') }}">
 
 <select name="status">
 <option value="">All Status</option>
@@ -18,7 +18,8 @@
 <option value="cancelled">Cancelled</option>
 </select>
 
-<button type="submit">Search</button>
+<button type="submit" class="btn btn-search" >Search</button>
+<a href="{{ request.path }}" class="btn btn-danger " >Clear All</a>
 
 </form>
 </div>
@@ -50,7 +51,7 @@
 </table>
 </div>
 
-<div style="margin-bottom:15px;">
+<div style="margin-top:20px;">
     <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
 </div>
 

@@ -3,6 +3,28 @@
 
 <h2>All Reviews</h2>
 
+
+<div class="filter-bar">
+<form method="GET">
+
+<input type="text" name="user" placeholder="User"
+value="{{ request.args.get('user','') }}">
+
+<input type="text" name="skill" placeholder="Skill"
+value="{{ request.args.get('skill','') }}">
+
+<input type="text" name="provider" placeholder="Provider"
+value="{{ request.args.get('provider','') }}">
+
+<input type="number" name="rating" placeholder="Rating"
+value="{{ request.args.get('rating','') }}">
+
+<button type="submit" class="btn btn-primary">Search</button>
+
+<a href="/admin-reviews" class="btn btn-danger">Clear All</a>
+
+</form>
+</div> 
 <div class="card">
 <table class="admin-table">
 
@@ -10,6 +32,7 @@
 <tr>
     <th>User</th>
     <th>Skill</th>
+    <th>Provider</th>
     <th>Rating</th>
     <th>Comment</th>
 </tr>
@@ -20,6 +43,7 @@
 <tr>
     <td>{{ r.user_name }}</td>
     <td>{{ r.skill_name }}</td>
+    <td>{{ r.provider_name }}</td>
     <td>{{ r.rating }}</td>
     <td>{{ r.comment }}</td>
 </tr>
@@ -29,7 +53,7 @@
 </table>
 </div>
 
-<div style="margin-bottom:15px;">
+<div style="margin-top:20px;">
     <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
 </div>
 {% endblock %}
