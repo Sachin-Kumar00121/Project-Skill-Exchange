@@ -15,11 +15,14 @@
 
 <table class="admin-table">
 <tr>
-    <th>ID</th>
-    <th>Name</th>
-    <th>Email</th>
-    <th>Status</th>
+    <strong>
+     <th>ID</th>
+     <th>Name</th>
+     <th>Email</th>
+     <th>Status</th>
     <th>Action</th>
+    </strong>
+    
 </tr>
 
 {% for u in users %}
@@ -39,7 +42,7 @@
     <td>
         <div class="action-buttons">
 
-            <a href="/admin-toggle-user/{{ u.user_id }}?reason=Violation">
+            <a href="/admin-toggle-user/{{ u.user_id }}?reason=Violation"  onclick="return confirm('Are you sure?');">
           {% if u.status == "blocked" %}
           <button class="btn btn-success">Unblock</button>
          {% else %}
@@ -47,8 +50,7 @@
           {% endif %}
           </a>
 
-
-            <a href="/admin-delete-user/{{ u.user_id }}">
+            <a href="/admin-delete-user/{{ u.user_id }}" onclick="return confirm('Are you sure?');" >
                 <button class="btn btn-danger">Delete</button>
             </a>
 

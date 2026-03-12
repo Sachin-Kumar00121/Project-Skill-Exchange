@@ -167,13 +167,22 @@ def admin_toggle_user(user_id):
 @app.route("/admin-delete-user/<int:user_id>")
 def admin_delete_user(user_id):
 
-    if not admin_required():
-        return redirect("/login")
+    #  Delete bookings first
+    cursor.execute("DELETE FROM bookings WHERE user_id=%s", (user_id,))
 
+    #  Delete feedback if exists
+    cursor.execute("DELETE FROM feedback WHERE user_id=%s", (user_id,))
+
+    #  Delete skills if provider
+    cursor.execute("DELETE FROM skills WHERE provider_id=%s", (user_id,))
+
+    #  Now delete user
     cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
+
     db.commit()
 
     return redirect("/admin-users")
+
 
 # Admin Manage Providers Route with Search
 @app.route("/admin-providers")
