@@ -10,7 +10,37 @@
 <body>
 
 <h2>Welcome {{ session['user_name'] }}</h2>
-<p>Role: {{ session['role'] }}</p>
+
+<div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom:15px;">
+
+    <div>
+        <span style="background:#e2e8f0;padding:4px 8px;border-radius:15px;font-size:13px;">
+         <strong>Role:</strong>  {{ session.role }}
+        </span>
+
+    </div>
+
+    <div>
+
+        <span style="background:#e2e8f0;padding:4px 8px;border-radius:15px;font-size:13px;">
+         <strong>Account Status:</strong>
+        </span>
+       
+        {% if user_status == "blocked" %}
+            <span style="background:#fee2e2;color:#991b1b;padding:5px 10px;border-radius:20px;font-size:13px;">
+                Blocked
+            </span>
+        {% else %}
+            <span style="background:#dcfce7;color:#044d20;padding:5px 10px;border-radius:20px;font-size:13px;">
+                Active
+            </span>
+     
+        {% endif %}
+    </div>
+ 
+</div>
+
+
 
 <hr>
 
@@ -72,13 +102,21 @@
 {% endif %}
 
 <hr>
+<div class="action-row">
 
-<a href="/logout" style="display:inline-block;
+    <a href="/change-password" class="btn btn-warning">
+        🔐 Change Password
+    </a>
+
+    <a href="/logout" class="btn btn-warning" style="display:inline-block;
           padding:8px 15px;
           background:#d80303d3;
           color:rgb(12, 12, 10);
           border-radius:6px;
           text-decoration:none;">🚪 Logout</a>
+
+</div>
+
 
 </body>
 </html>

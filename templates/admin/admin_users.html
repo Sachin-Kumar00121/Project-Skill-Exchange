@@ -1,0 +1,69 @@
+{% extends "admin/admin_base.html" %}
+{% block content %}
+
+<h2>Manage Users</h2>
+
+<div class="filter-bar">
+<form method="GET">
+    <input type="text" name="search" placeholder="Search user...">
+    <button type="submit">Search</button>
+</form>
+</div>
+
+
+<div class="card">
+
+<table class="admin-table">
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Status</th>
+    <th>Action</th>
+</tr>
+
+{% for u in users %}
+<tr>
+    <td>{{ u.user_id }}</td>
+    <td>{{ u.name }}</td>
+    <td>{{ u.email }}</td>
+
+    <td>
+        {% if u.status == "blocked" %}
+            <span style="color:red;font-weight:bold;" class="badge-blocked" >Blocked</span>
+        {% else %}
+            <span style="color:green;font-weight:bold;" class="badge-active">Active</span>
+        {% endif %}
+    </td>
+
+    <td>
+        <div class="action-buttons">
+
+            <a href="/admin-toggle-user/{{ u.user_id }}?reason=Violation">
+          {% if u.status == "blocked" %}
+          <button class="btn btn-success">Unblock</button>
+         {% else %}
+          <button class="btn btn-warning">Block</button>
+          {% endif %}
+          </a>
+
+
+            <a href="/admin-delete-user/{{ u.user_id }}">
+                <button class="btn btn-danger">Delete</button>
+            </a>
+
+        </div>
+    </td>
+</tr>
+
+{% endfor %}
+
+</table>
+</div>
+
+<div style="margin-bottom:15px;">
+    <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
+</div>
+
+{% endblock %}
+

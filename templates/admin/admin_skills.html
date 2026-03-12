@@ -1,0 +1,50 @@
+{% extends "admin/admin_base.html" %}
+{% block content %}
+
+<h2>Manage Skills</h2>
+
+<div class="filter-bar">
+<form method="GET">
+
+<input type="text" name="category" placeholder="Category">
+<input type="text" name="skill" placeholder="Skill Name">
+<input type="text" name="provider" placeholder="Provider">
+<input type="number" name="price" placeholder="Max Price">
+
+<button type="submit">Filter</button>
+
+</form>
+</div>
+
+<div class="card">
+<table class="admin-table">
+
+<thead>
+<tr>
+    <th>Skill</th>
+    <th>Provider</th>
+    <th>Category</th>
+    <th>Price</th>
+</tr>
+</thead>
+
+<tbody>
+{% for s in skills %}
+<tr>
+    <td>{{ s.skill_name }}</td>
+    <td>{{ s.provider_name }}</td>
+    <td>{{ s.category }}</td>
+    <td>₹ {{ s.base_price }}</td>
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+</div>
+
+<div style="margin-bottom:15px;">
+    <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
+</div>
+
+
+{% endblock %}

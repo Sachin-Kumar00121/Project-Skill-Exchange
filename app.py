@@ -6,7 +6,6 @@ from flask import make_response
 from flask import Flask, render_template, request, redirect, session, url_for
 from datetime import datetime, time, date
 import re
-
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -23,6 +22,283 @@ db = mysql.connector.connect(
 
 )
 cursor = db.cursor(dictionary=True)
+
+def admin_required():
+    if session.get("role") != "admin":
+        return False
+    return True
+
+
+# Admin login route
+@app.route("/admin-login", methods=["GET","POST"])
+def admin_login():
+
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        cursor.execute("SELECT * FROM users WHERE email=%s AND role='admin'", (email,))
+        admin = cursor.fetchone()
+
+        if admin and check_password_hash(admin["password"], password):
+            session.clear()
+            session["user_id"] = admin["user_id"]
+            session["role"] = "admin"
+            return redirect("/admin-dashboard")
+        else:
+            return render_template("admin/admin_login.html", error="Invalid Login Credentials....")
+
+    return render_template("admin/admin_login.html")
+
+#Admin Passwoerd Change Route
+@app.route("/admin-change-password", methods=["GET","POST"])
+def admin_change_password():
+
+    if session.get("role") != "admin":
+        return redirect("/login")
+
+    if request.method == "POST":
+        old_password = request.form["old_password"]
+        new_password = request.form["new_password"]
+
+        cursor.execute("SELECT * FROM users WHERE user_id=%s", (session["user_id"],))
+        admin = cursor.fetchone()
+
+        if not check_password_hash(admin["password"], old_password):
+            return render_template("admin/admin_change_password.html", error="Old password incorrect")
+
+        new_hash = generate_password_hash(new_password)
+
+        cursor.execute("UPDATE users SET password=%s WHERE user_id=%s",
+                       (new_hash, session["user_id"]))
+        db.commit()
+
+        return render_template("admin/admin_change_password.html",
+                               message="Password Updated Successfully")
+
+    return render_template("admin/admin_change_password.html")
+
+
+#Admin dashboard route
+@app.route("/admin-dashboard")
+def admin_dashboard():
+
+    if not admin_required():
+        return redirect("/login")
+
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='user'")
+    total_users = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='provider'")
+    total_providers = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) as total FROM bookings")
+    total_bookings = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT SUM(offered_price) as revenue FROM bookings WHERE status='completed'")
+    revenue = cursor.fetchone()["revenue"] or 0
+
+    return render_template(
+        "admin/admin_dashboard.html",
+        total_users=total_users,
+        total_providers=total_providers,
+        total_bookings=total_bookings,
+        total_revenue=revenue
+    )
+
+
+#Admin Manage users route
+@app.route("/admin-users")
+def admin_users():
+
+    search = request.args.get("search")
+
+    query = "SELECT * FROM users WHERE role='user'"
+    values = []
+
+    if search:
+        query += " AND (name LIKE %s OR email LIKE %s)"
+        values.append(f"%{search}%")
+        values.append(f"%{search}%")
+
+    cursor.execute(query, tuple(values))
+    users = cursor.fetchall()
+
+    return render_template("admin/admin_users.html",
+                           users=users)
+
+
+
+# Admin Toggle User Block/Unblock Route
+@app.route("/admin-toggle-user/<int:user_id>")
+def admin_toggle_user(user_id):
+
+    if session.get("role") != "admin":
+        return redirect("/login")
+
+    reason = request.args.get("reason", "Policy Violation")
+
+    cursor.execute("SELECT status FROM users WHERE user_id=%s", (user_id,))
+    user = cursor.fetchone()
+
+    if user["status"] == "active":
+        cursor.execute("""
+            UPDATE users
+            SET status='blocked',
+                block_reason=%s,
+                blocked_at=%s
+            WHERE user_id=%s
+        """, (reason, datetime.now(), user_id))
+    else:
+        cursor.execute("""
+            UPDATE users
+            SET status='active',
+                block_reason=NULL,
+                blocked_at=NULL
+            WHERE user_id=%s
+        """, (user_id,))
+
+    db.commit()
+    return redirect(request.referrer)
+
+
+
+#Admin Delete User Route
+@app.route("/admin-delete-user/<int:user_id>")
+def admin_delete_user(user_id):
+
+    if not admin_required():
+        return redirect("/login")
+
+    cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
+    db.commit()
+
+    return redirect("/admin-users")
+
+# Admin Manage Providers Route with Search
+@app.route("/admin-providers")
+def admin_providers():
+    search = request.args.get("search")
+
+    query = "SELECT * FROM users WHERE role='provider'"
+    values = []
+
+    if search:
+        query += " AND (name LIKE %s OR email LIKE %s)"
+        values.append(f"%{search}%")
+        values.append(f"%{search}%")
+
+    cursor.execute(query, tuple(values))
+    providers = cursor.fetchall()
+
+    return render_template("admin/admin_providers.html",
+                           providers=providers)
+
+
+# Admin Manage Bookings Route
+@app.route("/admin-bookings")
+def admin_bookings():
+
+    user = request.args.get("user")
+    provider = request.args.get("provider")
+    skill = request.args.get("skill")
+    status = request.args.get("status")
+
+    query = """
+    SELECT b.*, 
+           u.name as user_name,
+           p.name as provider_name,
+           s.skill_name
+    FROM bookings b
+    JOIN users u ON b.user_id = u.user_id
+    JOIN users p ON b.provider_id = p.user_id
+    JOIN skills s ON b.skill_id = s.skill_id
+    WHERE 1=1
+    """
+
+    values = []
+
+    if user:
+        query += " AND u.name LIKE %s"
+        values.append(f"%{user}%")
+
+    if provider:
+        query += " AND p.name LIKE %s"
+        values.append(f"%{provider}%")
+
+    if skill:
+        query += " AND s.skill_name LIKE %s"
+        values.append(f"%{skill}%")
+
+    if status:
+        query += " AND b.status=%s"
+        values.append(status)
+
+    cursor.execute(query, tuple(values))
+    bookings = cursor.fetchall()
+
+    return render_template("admin/admin_bookings.html",
+                           bookings=bookings)
+
+
+# Admin Manage Skills Route
+@app.route("/admin-skills")
+def admin_skills():
+
+    category = request.args.get("category")
+    skill = request.args.get("skill")
+    provider = request.args.get("provider")
+    price = request.args.get("price")
+
+    query = """
+    SELECT s.*, u.name as provider_name
+    FROM skills s
+    JOIN users u ON s.provider_id = u.user_id
+    WHERE 1=1
+    """
+
+    values = []
+
+    if category:
+        query += " AND s.category LIKE %s"
+        values.append(f"%{category}%")
+
+    if skill:
+        query += " AND s.skill_name LIKE %s"
+        values.append(f"%{skill}%")
+
+    if provider:
+        query += " AND u.name LIKE %s"
+        values.append(f"%{provider}%")
+
+    if price:
+        query += " AND s.base_price <= %s"
+        values.append(price)
+
+    cursor.execute(query, tuple(values))
+    skills = cursor.fetchall()
+
+    return render_template("admin/admin_skills.html", skills=skills)
+
+
+# Admin Manage Reviews Route
+@app.route("/admin-reviews")
+def admin_reviews():
+
+    if not admin_required():
+        return redirect("/login")
+
+    cursor.execute("""
+        SELECT f.*, u.name as user_name, s.skill_name
+        FROM feedback f
+        JOIN users u ON f.user_id=u.user_id
+        JOIN skills s ON f.skill_id=s.skill_id
+        ORDER BY f.created_at DESC
+    """)
+
+    reviews = cursor.fetchall()
+
+    return render_template("admin/admin_reviews.html", reviews=reviews)
 
 
 # ✅ Home Page
@@ -102,7 +378,7 @@ def login():
         identifier = request.form["identifier"]
         password = request.form["password"]
 
-        # email 
+        # Email or Phone check
         if "@" in identifier:
             cursor.execute("SELECT * FROM users WHERE email=%s", (identifier,))
         else:
@@ -110,27 +386,113 @@ def login():
 
         user = cursor.fetchone()
 
-        
         if user and check_password_hash(user["password"], password):
+
+        
+            if user["role"] == "admin":
+                return render_template("login.html",
+                                       error="Admin must login from Admin Panel")
+
+
+            if user.get("status") == "blocked":
+                return render_template("login.html",
+                                      error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
+
+        
             session["user_id"] = user["user_id"]
             session["user_name"] = user["name"]
-            session["role"] = user["role"]   
+            session["role"] = user["role"]
 
             return redirect("/dashboard")
 
         else:
-            return render_template("login.html", error="Invalid Password or User not found")
+            return render_template("login.html",
+                                   error="Invalid Password or User not found")
 
     return render_template("login.html")
 
+import re
+from werkzeug.security import generate_password_hash, check_password_hash
+
+#✅ Change Password Route
+@app.route("/change-password", methods=["GET", "POST"])
+def change_password():
+
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user_id = session["user_id"]
+
+    if request.method == "POST":
+
+        old_password = request.form["old_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        cursor.execute("SELECT password FROM users WHERE user_id=%s", (user_id,))
+        user = cursor.fetchone()
+
+        # Old password verify
+        if not check_password_hash(user["password"], old_password):
+            return render_template("change_password.html",
+                                   error="Old password is incorrect")
+
+        # Password match check
+        if new_password != confirm_password:
+            return render_template("change_password.html",
+                                   error="Passwords do not match")
+
+        # Strong password rule
+        if len(new_password) < 8:
+            return render_template("change_password.html",
+                                   error="Password must be at least 8 characters")
+
+        if not re.search(r"[A-Z]", new_password):
+            return render_template("change_password.html",
+                                   error="Password must contain uppercase letter")
+
+        if not re.search(r"[a-z]", new_password):
+            return render_template("change_password.html",
+                                   error="Password must contain lowercase letter")
+
+        if not re.search(r"[0-9]", new_password):
+            return render_template("change_password.html",
+                                   error="Password must contain a number")
+
+        # Update password
+        new_hash = generate_password_hash(new_password)
+
+        cursor.execute(
+            "UPDATE users SET password=%s WHERE user_id=%s",
+            (new_hash, user_id)
+        )
+        db.commit()
+
+        return render_template("change_password.html",
+                               success="Password updated successfully")
+
+    return render_template("change_password.html")
 
 
 # ✅ Dashboard 
 @app.route("/dashboard")
 def dashboard():
+
     if "user_id" not in session:
         return redirect("/login")
-    return render_template("dashboard.html")
+
+    cursor.execute("SELECT status, block_reason FROM users WHERE user_id=%s",
+                   (session["user_id"],))
+    user = cursor.fetchone()
+
+    if user["status"] == "blocked":
+        session.clear()
+        return render_template("login.html",
+                               error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
+
+    return render_template("dashboard.html",
+                           user_status=user["status"])
+
 
 
 # ✅ Logout
