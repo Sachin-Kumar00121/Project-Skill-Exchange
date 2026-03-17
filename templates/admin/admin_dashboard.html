@@ -1,22 +1,32 @@
 {% extends "admin/admin_base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
 {% block content %}
 
-<h1>Admin Dashboard</h1>
+<div class="stats-grid">
 
-<div class="card">
-    <h3>Total Users: {{ total_users }}</h3>
-</div>
+    <div class="stat-box">
+        <h4>Total Users</h4>
+       <p class="counter" data-target="{{ total_users }}">0</p>
+    </div>
 
-<div class="card">
-    <h3>Total Providers: {{ total_providers }}</h3>
-</div>
+    <div class="stat-box">
+        <h4>Total Providers</h4>
+        <p class="counter" data-target="{{ total_providers }}">0</p>
+    </div>
 
-<div class="card">
-    <h3>Total Bookings: {{ total_bookings }}</h3>
-</div>
+    <div class="stat-box">
+        <h4>Total Bookings</h4>
+        <p class="counter" data-target="{{ total_bookings }}">0</p>
+    </div>
 
-<div class="card">
-    <h3>Total Revenue: ₹{{ total_revenue }}</h3>
+    <div class="stat-box">
+        <h4>Total Revenue</h4>
+        <p class="counter" data-target="{{ total_revenue }}">0</p>
+    </div>
+
 </div>
 
 {% endblock %}

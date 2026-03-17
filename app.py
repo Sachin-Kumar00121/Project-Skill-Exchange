@@ -50,6 +50,12 @@ def admin_login():
 
     return render_template("admin/admin_login.html")
 
+# Admin logout route
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("admin", None)
+    return redirect(url_for("admin_login"))
+
 #Admin Passwoerd Change Route
 @app.route("/admin-change-password", methods=["GET","POST"])
 def admin_change_password():
@@ -113,6 +119,10 @@ def admin_users():
 
     search = request.args.get("search")
 
+    page = request.args.get("page",1,type=int)
+    per_page = 5
+    offset = (page-1)*per_page
+
     query = "SELECT * FROM users WHERE role='user'"
     values = []
 
@@ -121,12 +131,27 @@ def admin_users():
         values.append(f"%{search}%")
         values.append(f"%{search}%")
 
+    # total count
+    count_query = query
+    cursor.execute(count_query, tuple(values))
+    total = len(cursor.fetchall())
+
+    # pagination
+    query += " LIMIT %s OFFSET %s"
+    values.append(per_page)
+    values.append(offset)
+
     cursor.execute(query, tuple(values))
     users = cursor.fetchall()
 
-    return render_template("admin/admin_users.html",
-                           users=users)
+    total_pages = (total + per_page -1)//per_page
 
+    return render_template(
+        "admin/admin_users.html",
+        users=users,
+        page=page,
+        total_pages=total_pages
+    )
 
 
 # Admin Toggle User Block/Unblock Route
@@ -186,7 +211,12 @@ def admin_delete_user(user_id):
 # Admin Manage Providers Route with Search
 @app.route("/admin-providers")
 def admin_providers():
+
     search = request.args.get("search")
+
+    page = request.args.get("page",1,type=int)
+    per_page = 5
+    offset = (page-1)*per_page
 
     query = "SELECT * FROM users WHERE role='provider'"
     values = []
@@ -196,11 +226,25 @@ def admin_providers():
         values.append(f"%{search}%")
         values.append(f"%{search}%")
 
+    count_query = query
+    cursor.execute(count_query, tuple(values))
+    total = len(cursor.fetchall())
+
+    query += " LIMIT %s OFFSET %s"
+    values.append(per_page)
+    values.append(offset)
+
     cursor.execute(query, tuple(values))
     providers = cursor.fetchall()
 
-    return render_template("admin/admin_providers.html",
-                           providers=providers)
+    total_pages = (total + per_page -1)//per_page
+
+    return render_template(
+        "admin/admin_providers.html",
+        providers=providers,
+        page=page,
+        total_pages=total_pages
+    )
 
 
 # Admin Manage Bookings Route
@@ -211,6 +255,10 @@ def admin_bookings():
     provider = request.args.get("provider")
     skill = request.args.get("skill")
     status = request.args.get("status")
+
+    page = request.args.get("page",1,type=int)
+    per_page = 5
+    offset = (page-1)*per_page
 
     query = """
     SELECT b.*, 
@@ -242,12 +290,25 @@ def admin_bookings():
         query += " AND b.status=%s"
         values.append(status)
 
+    count_query = query
+    cursor.execute(count_query, tuple(values))
+    total = len(cursor.fetchall())
+
+    query += " LIMIT %s OFFSET %s"
+    values.append(per_page)
+    values.append(offset)
+
     cursor.execute(query, tuple(values))
     bookings = cursor.fetchall()
 
-    return render_template("admin/admin_bookings.html",
-                           bookings=bookings)
+    total_pages = (total + per_page -1)//per_page
 
+    return render_template(
+        "admin/admin_bookings.html",
+        bookings=bookings,
+        page=page,
+        total_pages=total_pages
+    )
 
 # Admin Manage Skills Route
 @app.route("/admin-skills")
@@ -257,6 +318,10 @@ def admin_skills():
     skill = request.args.get("skill")
     provider = request.args.get("provider")
     price = request.args.get("price")
+
+    page = request.args.get("page",1,type=int)
+    per_page = 5
+    offset = (page-1)*per_page
 
     query = """
     SELECT s.*, u.name as provider_name
@@ -280,16 +345,32 @@ def admin_skills():
         values.append(f"%{provider}%")
 
     if price:
-      try:
-        search_price = float(price)
-        query += " AND s.price = %s"
-        values.append(search_price)
-      except ValueError:
-        pass
+        try:
+            search_price = float(price)
+            query += " AND s.price = %s"
+            values.append(search_price)
+        except ValueError:
+            pass
+
+    count_query = query
+    cursor.execute(count_query, tuple(values))
+    total = len(cursor.fetchall())
+
+    query += " LIMIT %s OFFSET %s"
+    values.append(per_page)
+    values.append(offset)
+
     cursor.execute(query, tuple(values))
     skills = cursor.fetchall()
 
-    return render_template("admin/admin_skills.html", skills=skills)
+    total_pages = (total + per_page -1)//per_page
+
+    return render_template(
+        "admin/admin_skills.html",
+        skills=skills,
+        page=page,
+        total_pages=total_pages
+    )
 
 
 # Admin Manage Reviews Route
@@ -301,6 +382,10 @@ def admin_reviews():
     provider = request.args.get("provider")
     rating = request.args.get("rating")
     comment = request.args.get("comment")
+
+    page = request.args.get("page",1,type=int)
+    per_page = 5
+    offset = (page-1)*per_page
 
     query = """
     SELECT r.*, u.name as user_name, s.skill_name, p.name as provider_name
@@ -333,11 +418,25 @@ def admin_reviews():
         query += " AND r.comment LIKE %s"
         values.append(f"%{comment}%")
 
+    count_query = query
+    cursor.execute(count_query, tuple(values))
+    total = len(cursor.fetchall())
+
+    query += " LIMIT %s OFFSET %s"
+    values.append(per_page)
+    values.append(offset)
+
     cursor.execute(query, tuple(values))
     reviews = cursor.fetchall()
 
-    return render_template("admin/admin_reviews.html", reviews=reviews)
+    total_pages = (total + per_page -1)//per_page
 
+    return render_template(
+        "admin/admin_reviews.html",
+        reviews=reviews,
+        page=page,
+        total_pages=total_pages
+    )
 
 # ✅ Home Page
 @app.route("/")

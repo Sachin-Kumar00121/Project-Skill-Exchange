@@ -1,83 +1,95 @@
 {% extends "admin/admin_base.html" %}
+
+{% block page_title %}Manage Providers{% endblock %}
+
 {% block content %}
 
-<div class="page-header">
-    <h2>Manage Providers</h2>
-</div>
+<form method="GET">
+    <div class="filter-bar">
+        <input type="text" name="search"
+               placeholder="Search provider..."
+               value="{{ request.args.get('search','') }}">
 
-<div class="filter-bar">
-    <form method="GET">
-        <input type="text" name="search" placeholder="Search provider..." value="{{ request.args.get('search','') }}">
-        <button type="submit">Search</button>
+        <button type="submit" class="btn btn-primary">Search</button>
         <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
-    </form>
-</div>
- 
-<div class="card">
-    <table class="admin-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th style="text-align:center;">Action</th>
-            </tr>
-        </thead>
+    </div>
+</form>
 
-        <tbody>
-            {% for p in providers %}
-            <tr>
-                <td>{{ p.user_id }}</td>
-                <td>{{ p.name }}</td>
-                <td>{{ p.email if p.email else "Not Provided" }}</td>
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
 
-                <td>
+    <tbody>
+        {% for p in providers %}
+        <tr>
+            <td>{{ p.user_id }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ p.email or "Not Provided" }}</td>
+
+            <td>
+                {% if p.status == "blocked" %}
+                    <span class="status-badge status-blocked">Blocked</span>
+                {% else %}
+                    <span class="status-badge status-active">Active</span>
+                {% endif %}
+            </td>
+
+            <td class="action-buttons">
+               <a href="javascript:void(0);"
+                 onclick="customConfirm('/admin-toggle-provider/{{p.user_id}}','Are You Sure ?')">
                     {% if p.status == "blocked" %}
-                        <span class="status blocked">Blocked</span>
+                        <button class="btn btn-success">Unblock</button>
                     {% else %}
-                        <span class="status active">Active</span>
+                        <button class="btn btn-warning">Block</button>
                     {% endif %}
-                </td>
+                </a>
 
-                <td style="text-align:center;">
-                    <div class="action-buttons">
+                <a href="javascript:void(0);"
+                 onclick="customConfirm('/admin-delete-provider/{{p.user_id}}','Delete This Provider?')">
+                    <button class="btn btn-danger">Delete</button>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-                        <a href="/admin-toggle-user/{{ p.user_id }}"
-                           onclick="return confirm('Are you sure?');">
-                            {% if p.status == "blocked" %}
-                                <button class="btn btn-success">Unblock</button>
-                            {% else %}
-                                <button class="btn btn-warning">Block</button>
-                            {% endif %}
-                        </a>
+<div class="pagination-container">
 
-                        <a href="/admin-delete-user/{{ p.user_id }}"
-                           onclick="return confirm('Delete this provider?');">
-                            <button class="btn btn-danger">Delete</button>
-                        </a>
+    <div class="pagination-left">
+        {% if page > 1 %}
+        <a href="?page={{page-1}}" class="page-link">Prev</a>
+        {% endif %}
+    </div>
 
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
+    <div class="pagination-center">
+        {% for p in range(1,total_pages+1) %}
+        <a href="?page={{p}}"
+           class="page-link {% if p==page %}active{% endif %}">
+           {{p}}
+        </a>
+        {% endfor %}
+    </div>
 
-            {% if providers|length == 0 %}
-            <tr>
-                <td colspan="5" style="text-align:center; padding:20px;">
-                    No Providers Found
-                </td>
-            </tr>
-            {% endif %}
+    <div class="pagination-right">
+        {% if page < total_pages %}
+        <a href="?page={{page+1}}" class="page-link">Next</a>
+        {% endif %}
+    </div>
 
-        </tbody>
-    </table>
 </div>
 
-<div style="margin-top:20px;">
-    <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
+<div class="dashboard-btn">
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+← Back to Dashboard
+</a>
 </div>
 
 {% endblock %}
-
-

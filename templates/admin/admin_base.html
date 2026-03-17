@@ -1,325 +1,91 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Panel</title>
+    <title>{% block title %}Admin Panel{% endblock %}</title>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-   <style>
-
-/* ===============================
-   GLOBAL
-================================= */
-
-body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: #f1f5f9;
-    color: #1e293b;
-}
-
-/* ===============================
-   SIDEBAR
-================================= */
-
-.sidebar {
-    width: 240px;
-    height: 100vh;
-    background: #0f172a;
-    position: fixed;
-    padding-top: 25px;
-}
-
-.sidebar h2 {
-    color: white;
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 20px;
-}
-
-.sidebar a {
-    display: block;
-    color: #cbd5e1;
-    padding: 12px 20px;
-    text-decoration: none;
-    transition: 0.3s;
-    font-size: 15px;
-}
-
-.sidebar a:hover {
-    background: #1e293b;
-    color: white;
-}
-
-/* ===============================
-   CONTENT AREA
-================================= */
-
-.content {
-    margin-left: 240px;
-    padding: 35px;
-}
-
-.page-header {
-    margin-bottom: 25px;
-}
-
-.page-header h2 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-/* ===============================
-   CHANGE PASSWORD PAGE
-================================= */
-
-.password-wrapper {
-    text-align: center;
-    margin-top: 40px;
-}
-
-.page-title {
-    margin-bottom: 20px;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.password-card {
-    max-width: 420px;
-    margin: 0 auto;
-    background: white;
-    padding: 30px;
-    border-radius: 14px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    box-sizing: border-box;
-}
-
-/* Input wrapper */
-.password-field {
-    position: relative;
-    margin-bottom: 18px;
-}
-
-.password-field input {
-    width: 100%;
-    height: 42px;
-    padding: 0 42px 0 12px;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    font-size: 14px;
-     box-sizing: border-box; 
-}
-
-.password-field span {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-}
-
-/* Full width button */
-.btn-full {
-    width: 100%;
-}
-
-/* Success / Error */
-.success-msg {
-    color: #16a34a;
-    margin-bottom: 15px;
-}
-
-.error-msg {
-    color: #ef4444;
-    margin-bottom: 15px;
-}
-
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 14px;
-    box-shadow: 0 8px 22px rgba(0,0,0,0.06);
-    margin-bottom: 25px;
-}
-
-/* ===============================
-   TABLE
-================================= */
-
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.admin-table th {
-    background: #f8fafc;
-    padding: 14px;
-    text-align: left;
-    font-weight: 600;
-    color: #475569;
-}
-
-.admin-table td {
-    padding: 14px;
-    border-top: 1px solid #e2e8f0;
-}
-
-.admin-table tr:hover {
-    background: #f9fafc;
-}
-
-/* Center action column */
-.admin-table td:last-child,
-.admin-table th:last-child {
-    text-align: center;
-}
-
-/* ===============================
-   STATUS BADGE
-================================= */
-
-.status {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.status.active {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.status.blocked {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-/* ===============================
-   BUTTONS
-================================= */
-
-.btn {
-    padding: 7px 15px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: 0.3s;
-}
-
-.btn-success {
-    background: #16a34a;
-    color: white;
-}
-
-.btn-warning {
-    background: #f59e0b;
-    color: white;
-}
-
-.btn-danger {
-    background: #ef4444;
-    color: white;
-}
-
-.btn-primary {
-    background: #2563eb;
-    color: white;
-}
-
-.btn:hover {
-    opacity: 0.85;
-}
-
-/* ===============================
-   ACTION BUTTON GROUP
-================================= */
-
-.action-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-
-/* ===============================
-   FILTER BAR
-================================= */
-
-.filter-bar {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.filter-bar input,
-.filter-bar select {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    font-size: 14px;
-}
-
-.filter-bar button {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    cursor: pointer;
-}
-
-.filter-bar button:hover {
-    background: #1d4ed8;
-}
-
-/* ===============================
-   RESPONSIVE
-================================= */
-
-@media (max-width: 768px) {
-
-    .sidebar {
-        width: 200px;
-    }
-
-    .content {
-        margin-left: 200px;
-        padding: 20px;
-    }
-
-    .admin-table th,
-    .admin-table td {
-        font-size: 13px;
-        padding: 10px;
-    }
-
-}
-
-</style>
-
+    <!-- CORE DESIGN SYSTEM -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
-<body>
 
-<div class="sidebar">
-    <h2>Admin</h2>
-    <a href="/admin-dashboard">Dashboard</a>
-    <a href="/admin-users">Users</a>
-    <a href="/admin-providers">Providers</a>
-    <a href="/admin-skills">Skills</a>
-    <a href="/admin-bookings">Bookings</a>
-    <a href="/admin-reviews">Reviews</a>
-    <a href="/admin-change-password">Change Password</a>
-    <a href="/logout">Logout</a>
+<body data-theme="light">
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<div class="admin-sidebar">
+
+    <h2 class="logo">⚡ SkillX</h2>
+
+    <a href="{{ url_for('admin_dashboard') }}" 
+     class="{% if request.endpoint == 'admin_dashboard' %}active-link{% endif %}">
+     📊 Dashboard</a>
+
+    <a href="{{ url_for('admin_users') }}" 
+    class="{% if request.endpoint == 'admin_users' %}active-link{% endif %}">
+    👤 Users</a>
+
+    <a href="{{ url_for('admin_providers') }}" 
+    class="{% if request.endpoint == 'admin_providers' %}active-link{% endif %}">
+    🛠 Providers</a>
+
+    <a href="{{ url_for('admin_skills') }}" 
+    class="{% if request.endpoint == 'admin_skills' %}active-link{% endif %}">
+    📚 Skills</a>
+
+    <a href="{{ url_for('admin_bookings') }}" 
+    class="{% if request.endpoint == 'admin_bookings' %}active-link{% endif %}">
+    📅 Bookings</a>
+
+    <a href="{{ url_for('admin_reviews') }}" 
+    class="{% if request.endpoint == 'admin_reviews' %}active-link{% endif %}">
+    ⭐ Reviews</a>
+
+    <a href="{{ url_for('admin_change_password') }}" 
+    class="{% if request.endpoint == 'admin_change_password' %}active-link{% endif %}">
+    🔒 Change Password</a>
+
+    <a href="{{ url_for('admin_logout') }}" 
+    class="{% if request.endpoint == 'admin_logout' %}active-link{% endif %}">
+    🚪 Logout</a>
+
 </div>
 
-<div class="content">
-    {% block content %}{% endblock %}
+<!-- =========================
+     MAIN CONTENT
+========================= -->
+
+<div class="admin-content">
+
+    <div class="admin-topbar">
+        <h1>{% block page_title %}{% endblock %}</h1>
+
+        <button id="themeToggle" class="btn btn-warning">Toggle Theme</button>
+    </div>
+
+    <div class="admin-card">
+        {% block content %}{% endblock %}
+    </div>
+
 </div>
+
+<!-- CUSTOM CONFIRM MODAL -->
+<div id="confirmModal" class="confirm-modal">
+    <div class="confirm-box">
+        <p id="confirmText">Are you sure?</p>
+
+        <div class="confirm-actions">
+            <button id="confirmYes" class="btn btn-danger">Yes</button>
+            <button id="confirmNo" class="btn btn-primary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<div id="toast" class="toast"></div>
 
 </body>
 </html>
-

@@ -1,13 +1,9 @@
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% extends "base.html" %}
 
-</head>
-<body>
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
 
 <h2>Welcome {{ session['user_name'] }}</h2>
 
@@ -117,6 +113,4 @@
 
 </div>
 
-
-</body>
-</html>
+{% endblock %}

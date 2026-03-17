@@ -1,71 +1,97 @@
 {% extends "admin/admin_base.html" %}
+
+{% block page_title %}Manage Users{% endblock %}
+
 {% block content %}
 
-<h2>Manage Users</h2>
-
-<div class="filter-bar">
 <form method="GET">
-    <input type="text" name="search" placeholder="Search user..."  value="{{ request.args.get('search','') }}">
-    <button type="submit">Search</button>
-    <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
-</form>
-</div>
+    <div class="filter-bar">
+        <input type="text" name="search"
+               placeholder="Search user..."
+               value="{{ request.args.get('search','') }}">
 
-<div class="card">
+        <button type="submit" class="btn btn-primary">Search</button>
+
+        <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
+    </div>
+</form>
 
 <table class="admin-table">
-<tr>
-    <strong>
-     <th>ID</th>
-     <th>Name</th>
-     <th>Email</th>
-     <th>Status</th>
-    <th>Action</th>
-    </strong>
-    
-</tr>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
 
-{% for u in users %}
-<tr>
-    <td>{{ u.user_id }}</td>
-    <td>{{ u.name }}</td>
-    <td>{{ u.email }}</td>
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.user_id }}</td>
+            <td>{{ u.name }}</td>
+            <td>{{ u.email }}</td>
 
-    <td>
-        {% if u.status == "blocked" %}
-            <span style="color:red;font-weight:bold;" class="badge-blocked" >Blocked</span>
-        {% else %}
-            <span style="color:green;font-weight:bold;" class="badge-active">Active</span>
-        {% endif %}
-    </td>
+            <td>
+                {% if u.status == "blocked" %}
+                    <span class="status-badge status-blocked">Blocked</span>
+                {% else %}
+                    <span class="status-badge status-active">Active</span>
+                {% endif %}
+            </td>
 
-    <td>
-        <div class="action-buttons">
+            <td class="action-buttons">
+                <a href="javascript:void(0);"
+                  onclick="customConfirm('/admin-toggle-user/{{u.user_id}}','Are You Sure ?')">
+                    {% if u.status == "blocked" %}
+                        <button class="btn btn-success">Unblock</button>
+                    {% else %}
+                        <button class="btn btn-warning">Block</button>
+                    {% endif %}
+                </a>
 
-            <a href="/admin-toggle-user/{{ u.user_id }}?reason=Violation"  onclick="return confirm('Are you sure?');">
-          {% if u.status == "blocked" %}
-          <button class="btn btn-success">Unblock</button>
-         {% else %}
-          <button class="btn btn-warning">Block</button>
-          {% endif %}
-          </a>
-
-            <a href="/admin-delete-user/{{ u.user_id }}" onclick="return confirm('Are you sure?');" >
+                <a href="javascript:void(0);"
+                 onclick="customConfirm('/admin-delete-user/{{u.user_id}}','Delete This User?')">
                 <button class="btn btn-danger">Delete</button>
-            </a>
-
-        </div>
-    </td>
-</tr>
-
-{% endfor %}
-
+                </a>
+            
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
+
+<div class="pagination-container">
+
+    <div class="pagination-left">
+        {% if page > 1 %}
+        <a href="?page={{page-1}}" class="page-link">Prev</a>
+        {% endif %}
+    </div>
+
+    <div class="pagination-center">
+        {% for p in range(1,total_pages+1) %}
+        <a href="?page={{p}}"
+           class="page-link {% if p==page %}active{% endif %}">
+           {{p}}
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="pagination-right">
+        {% if page < total_pages %}
+        <a href="?page={{page+1}}" class="page-link">Next</a>
+        {% endif %}
+    </div>
+
 </div>
 
-<div style="margin-top:20px;">
-    <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
+<div class="dashboard-btn">
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+← Back to Dashboard
+</a>
 </div>
 
 {% endblock %}
-

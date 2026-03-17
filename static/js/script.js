@@ -67,3 +67,75 @@ function convertTo12Hour(time24) {
     hours = hours ? hours : 12;
     return hours + ":" + minutes + " " + ampm;
 }
+
+/* DROPDOWN FIX */
+const btn = document.querySelector(".register-btn");
+const menu = document.querySelector(".dropdown-menu");
+
+btn.addEventListener("click",(e)=>{
+e.stopPropagation();
+menu.classList.toggle("show");
+});
+
+document.addEventListener("click",()=>{
+menu.classList.remove("show");
+});
+
+/* REPEAT SCROLL ANIMATION */
+function revealOnScroll(){
+const elements = document.querySelectorAll(".reveal, .fade-left, .zoom-in");
+
+elements.forEach(el=>{
+const windowHeight = window.innerHeight;
+const top = el.getBoundingClientRect().top;
+
+if(top < windowHeight - 100){
+el.classList.add("active");
+}else{
+el.classList.remove("active"); 
+}
+});
+}
+
+window.addEventListener("scroll", revealOnScroll);
+window.addEventListener("load", revealOnScroll);
+
+/* SEARCH SUGGESTION */
+const data = ["Car Wash","AC Repair","Computer Repair","Electrician"];
+
+function suggest(){
+let input = document.getElementById("searchInput").value.toLowerCase();
+let box = document.getElementById("suggestions");
+
+box.innerHTML = "";
+if(input==="") return;
+
+data.forEach(item=>{
+if(item.toLowerCase().includes(input)){
+let div = document.createElement("div");
+div.innerText = item;
+
+div.onclick = ()=>{
+document.getElementById("searchInput").value = item;
+box.innerHTML="";
+};
+
+box.appendChild(div);
+}
+});
+}
+
+/* ROUTES */
+function goCategory(cat){
+window.location.href="/all-skills?category="+cat;
+}
+
+function goLogin(){
+window.location.href="/login";
+}
+
+function goSearch(){
+let val=document.getElementById("searchInput").value;
+window.location.href="/all-skills?search="+val;
+}
+

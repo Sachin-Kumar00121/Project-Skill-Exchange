@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+</head>
+
+<body data-theme="light">
+
+<button id="themeToggle" class="btn btn-warning"
+        style="position:fixed; top:20px; right:20px;">
+    Toggle Theme
+</button>
+
+<div class="member-wrapper">
+    {% block content %}{% endblock %}
+</div>
+
+<button id="themeToggle" class="btn btn-warning" style="position:fixed;top:20px;right:20px;">Toggle Theme</button>
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+
+
+</body>
+</html>

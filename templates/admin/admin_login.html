@@ -1,86 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Login</title>
-<style>
-body{
-    background:#0f172a;
-    font-family:Arial;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
+    <title>Admin Login</title>
 
-.box{
-    background:white;
-    padding:30px;
-    border-radius:10px;
-    width:350px;
-    text-align:center;
-}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-input{
-    width:100%;
-    padding:10px;
-    margin:10px 0;
-    border:1px solid #ccc;
-    border-radius:6px;
-}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 
-button{
-    padding:10px 20px;
-    background:#3b82f6;
-    border:none;
-    color:white;
-    border-radius:6px;
-    cursor:pointer;
-}
-
-.eye{
-    position:absolute;
-    right:15px;
-    top:43%;
-    cursor:pointer;
-}
-
-.password-box{
-    position:relative;
-}
-</style>
 </head>
 
-<body>
+<body class="admin-login-body">
 
-<div class="box">
-    <h2>Admin Login</h2>
+<div class="admin-login-wrapper">
 
-    {% if error %}
-        <p style="color:red">{{ error }}</p>
-    {% endif %}
+    <div class="admin-login-card">
 
-    <form method="POST">
-        <div class="password-box">
-            <input type="email" name="email" placeholder="Admin Email" required>
-        </div>
+        <h2 class="login-title">Admin Panel</h2>
+        <p class="login-sub">Secure Access</p>
 
-        <div class="password-box">
-            <input type="password" name="password" id="password" placeholder="Password" required>
-            <span class="eye" onclick="togglePassword()">👁</span>
-        </div>
+        {% if error %}
+            <div class="login-error">{{ error }}</div>
+        {% endif %}
 
-        <button type="submit">Login</button>
-    </form>
+        <form method="POST">
+
+            <div class="input-group">
+                <input type="email"
+                       name="email"
+                       placeholder="Admin Email"
+                       required>
+            </div>
+
+            <div class="password-field">
+                <input type="password"
+                       name="password"
+                       id="password"
+                       placeholder="Password"
+                       required>
+                <span onclick="togglePassword()">👁</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                Login
+            </button>
+
+        </form>
+
+    </div>
+
 </div>
 
 <script>
-function togglePassword(){
-    var x = document.getElementById("password");
-    if(x.type === "password"){
-        x.type = "text";
-    } else {
-        x.type = "password";
-    }
+function togglePassword() {
+    var field = document.getElementById("password");
+    field.type = field.type === "password" ? "text" : "password";
 }
 </script>
 

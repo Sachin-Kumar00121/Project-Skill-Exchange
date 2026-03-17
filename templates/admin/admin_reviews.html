@@ -1,61 +1,87 @@
 {% extends "admin/admin_base.html" %}
+
+{% block page_title %}All Reviews{% endblock %}
+
 {% block content %}
 
-<h2>All Reviews</h2>
-
-
-<div class="filter-bar">
 <form method="GET">
+    <div class="filter-bar">
 
-<input type="text" name="user" placeholder="User"
-value="{{ request.args.get('user','') }}">
+        <input type="text" name="user"
+               placeholder="User"
+               value="{{ request.args.get('user','') }}">
 
-<input type="text" name="skill" placeholder="Skill"
-value="{{ request.args.get('skill','') }}">
+        <input type="text" name="skill"
+               placeholder="Skill"
+               value="{{ request.args.get('skill','') }}">
 
-<input type="text" name="provider" placeholder="Provider"
-value="{{ request.args.get('provider','') }}">
+        <input type="text" name="provider"
+               placeholder="Provider"
+               value="{{ request.args.get('provider','') }}">
 
-<input type="number" name="rating" placeholder="Rating"
-value="{{ request.args.get('rating','') }}">
+        <input type="number" name="rating"
+               placeholder="Rating"
+               value="{{ request.args.get('rating','') }}">
 
-<button type="submit" class="btn btn-primary">Search</button>
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
 
-<a href="/admin-reviews" class="btn btn-danger">Clear All</a>
-
+    </div>
 </form>
-</div> 
-<div class="card">
+
 <table class="admin-table">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Skill</th>
+            <th>Provider</th>
+            <th>Rating</th>
+            <th>Comment</th>
+        </tr>
+    </thead>
 
-<thead>
-<tr>
-    <th>User</th>
-    <th>Skill</th>
-    <th>Provider</th>
-    <th>Rating</th>
-    <th>Comment</th>
-</tr>
-</thead>
-
-<tbody>
-{% for r in reviews %}
-<tr>
-    <td>{{ r.user_name }}</td>
-    <td>{{ r.skill_name }}</td>
-    <td>{{ r.provider_name }}</td>
-    <td>{{ r.rating }}</td>
-    <td>{{ r.comment }}</td>
-</tr>
-{% endfor %}
-</tbody>
-
+    <tbody>
+        {% for r in reviews %}
+        <tr>
+            <td>{{ r.user_name }}</td>
+            <td>{{ r.skill_name }}</td>
+            <td>{{ r.provider_name }}</td>
+            <td>{{ r.rating }}</td>
+            <td>{{ r.comment }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
+
+<div class="pagination-container">
+
+    <div class="pagination-left">
+        {% if page > 1 %}
+        <a href="?page={{page-1}}" class="page-link">Prev</a>
+        {% endif %}
+    </div>
+
+    <div class="pagination-center">
+        {% for p in range(1,total_pages+1) %}
+        <a href="?page={{p}}"
+           class="page-link {% if p==page %}active{% endif %}">
+           {{p}}
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="pagination-right">
+        {% if page < total_pages %}
+        <a href="?page={{page+1}}" class="page-link">Next</a>
+        {% endif %}
+    </div>
+
 </div>
 
-<div style="margin-top:20px;">
-    <a href="javascript:history.back()" class="btn btn-primary">← Back</a>
+<div class="dashboard-btn">
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+← Back to Dashboard
+</a>
 </div>
+
 {% endblock %}
-
-

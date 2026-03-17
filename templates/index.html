@@ -1,24 +1,174 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Skill Exchange</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<title>SkillX Platform</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+<script defer src="{{ url_for('static', filename='js/script.js') }}"></script>
 
 </head>
-<body>
 
-  <h1>Skill Exchange Platform</h1>
+<body class="home-page">
 
-<div class="container">
-    <a href="/register/user" class="btn">Signup as User</a>
-    
-    <a href="/register/provider" class="btn">Signup as Provider</a>
+<!-- NAVBAR -->
+<nav class="navbar">
+<div class="logo">⚡ SkillX</div>
 
-    <a href="/login" class="btn">Login</a>
+<div class="nav-links">
+<a href="/">Home</a>
+<a href="/all-skills">Skills</a>
+<a href="/login">Login</a>
+
+<div class="dropdown">
+<span class="register-btn">Register ⬇</span>
+<div class="dropdown-menu">
+<a href="/register/user">User Signup</a>
+<br>
+<a href="/register/provider">Provider Signup</a>
+</div>
 </div>
 
+</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+<h1 class="reveal">Find Services Instantly</h1>
+<p class="reveal">Best professionals near you</p>
+
+<div class="search-box reveal">
+<input id="searchInput" placeholder="Search skills..." onkeyup="suggest()">
+<button onclick="goSearch()">Search</button>
+<div id="suggestions"></div>
+</div>
+</section>
+
+<!-- STATS -->
+<section class="section">
+<div class="grid">
+<div class="skill-card glass reveal"><h2>500+</h2><p>Users</p></div>
+<div class="skill-card glass zoom-in"><h2>120+</h2><p>Providers</p></div>
+<div class="skill-card glass fade-left"><h2>900+</h2><p>Bookings</p></div>
+</div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section">
+<h2 class="reveal">Top Categories</h2>
+
+<div class="grid">
+<div class="card fade-left" onclick="goCategory('mechanical')">
+<h3>🔧Mechanical Services</h3>
+<P> Building ,Maintenance & Repair. </P>
+</div>
+
+<div class="card zoom-in" onclick="goCategory('computer')">
+<h3>💻Computer Services</h3>
+<p>Computer Repair, Maintenance & Support.</p>
+</div>
+
+<div class="card reveal" onclick="goCategory('car')">
+<h3>🚗Car Services</h3>
+<p>Car Washing, Maintenance & Repair. </p>
+</div>
+
+<div class="card zoom-in" onclick="goCategory('home')">
+<h3>🏠Home Services</h3>
+<p>Home Services and Repairs. </p>
+</div>
+
+</div>
+</section>
+
+<!-- SERVICES -->
+<section class="section">
+<h2 class="reveal">Popular Services</h2>
+
+<div class="grid">
+
+<div class="skill-card service-card fade-left" >
+<h3>Car Wash</h3>
+<p>Provider : Prince</p>
+<p>₹500</p>
+<br><br>
+<button onclick="goLogin()">Book Now</button>
+</div>
+
+<div class="skill-card service-card zoom-in">
+<h3>AC Repair</h3>
+<p>Provider : Rohan</p>
+<p>₹1200</p>
+<br><br>
+<button onclick="goLogin()">Book Now</button>
+</div>
+
+<div class="skill-card service-card reveal">
+<h3>Computer Repair</h3>
+<p>Provider : Priya</p>
+<p>₹800</p>
+<br><br>
+<button onclick="goLogin()">Book Now</button>
+</div>
+
+</div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+<h2 class="reveal">How It Works?</h2>
+
+<div class="steps">
+<div class="card reveal">
+    <h3>1.Register </h3>
+   <p>Create your account</p>
+</div>
+
+<div class="card zoom-in">
+   <h3>2. Find Skill</h3>
+<p>Search the service you need</p>
+</div>
+<div class="card fade-left">
+  <h3>3. Book Service</h3>
+<p> Send booking request you want</p>
+</div>
+
+<div class="card reveal">
+   <h3>4. Give Feedback</h3>
+<p>Share your experience</p>
+</div>
+
+</div>
+</section>
+
+<!-- WHY -->
+<section class="section">
+<h2 class="reveal">Why Choose SkillX?</h2>
+
+<div class="grid">
+<div class="card fade-left">
+    <h3>Trusted Providers</h3>
+   <p>Verified professionals only</p>
+</div>
+
+<div class="card zoom-in">
+    <h3>Affordable Pricing</h3>
+    <p>Best rates guaranteed</p>
+</div>
+
+<div class="card reveal">
+    <h3>Fast Booking</h3>
+   <p>Quick and easy service booking</p>
+</div>
+
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+<h3>© 2026 SkillX Platform</h3>
+<p>Modern Service Marketplace</p>
+</footer>
 
 </body>
 </html>
