@@ -38,78 +38,58 @@
 <p class="reveal">Best professionals near you</p>
 
 <div class="search-box reveal">
-<input id="searchInput" placeholder="Search skills..." onkeyup="suggest()">
+<input id="searchInput" placeholder="Search skills..." onkeyup="suggestLive()">
 <button onclick="goSearch()">Search</button>
 <div id="suggestions"></div>
 </div>
 </section>
 
-<!-- STATS -->
+<!-- STATS (DYNAMIC) -->
 <section class="section">
 <div class="grid">
-<div class="skill-card glass reveal"><h2>500+</h2><p>Users</p></div>
-<div class="skill-card glass zoom-in"><h2>120+</h2><p>Providers</p></div>
-<div class="skill-card glass fade-left"><h2>900+</h2><p>Bookings</p></div>
+<div class="skill-card glass reveal"><h2>{{ total_users }}</h2><p>Users</p></div>
+<div class="skill-card glass zoom-in"><h2>{{ total_providers }}</h2><p>Providers</p></div>
+<div class="skill-card glass fade-left"><h2>{{ total_bookings }}</h2><p>Bookings</p></div>
 </div>
 </section>
 
-<!-- CATEGORIES -->
+<!-- TOP CATEGORIES (DYNAMIC) -->
 <section class="section">
 <h2 class="reveal">Top Categories</h2>
 
 <div class="grid">
-<div class="card fade-left" onclick="goCategory('mechanical')">
-<h3>🔧Mechanical Services</h3>
-<P> Building ,Maintenance & Repair. </P>
-</div>
 
-<div class="card zoom-in" onclick="goCategory('computer')">
-<h3>💻Computer Services</h3>
-<p>Computer Repair, Maintenance & Support.</p>
+{% for cat in top_categories %}
+<div class="card" onclick="goCategory('{{ cat.category }}')">
+<h3>{{ cat.category }}</h3>
+<p>{{ cat.total }} Services</p>
 </div>
-
-<div class="card reveal" onclick="goCategory('car')">
-<h3>🚗Car Services</h3>
-<p>Car Washing, Maintenance & Repair. </p>
-</div>
-
-<div class="card zoom-in" onclick="goCategory('home')">
-<h3>🏠Home Services</h3>
-<p>Home Services and Repairs. </p>
-</div>
+{% endfor %}
 
 </div>
 </section>
 
-<!-- SERVICES -->
+<!-- SERVICES (DYNAMIC + RATING) -->
 <section class="section">
 <h2 class="reveal">Popular Services</h2>
 
 <div class="grid">
 
-<div class="skill-card service-card fade-left" >
-<h3>Car Wash</h3>
-<p>Provider : Prince</p>
-<p>₹500</p>
-<br><br>
-<button onclick="goLogin()">Book Now</button>
-</div>
+{% for skill in skills %}
+<div class="skill-card service-card">
+<h3>{{ skill.skill_name }}</h3>
+<p>Provider : {{ skill.provider_name }}</p>
+<p>₹{{ skill.price }}</p>
 
-<div class="skill-card service-card zoom-in">
-<h3>AC Repair</h3>
-<p>Provider : Rohan</p>
-<p>₹1200</p>
-<br><br>
-<button onclick="goLogin()">Book Now</button>
-</div>
+<p>
+⭐ {{ skill.avg_rating if skill.avg_rating else "New" }} 
+({{ skill.total_reviews }} reviews)
+</p>
 
-<div class="skill-card service-card reveal">
-<h3>Computer Repair</h3>
-<p>Provider : Priya</p>
-<p>₹800</p>
-<br><br>
+<br>
 <button onclick="goLogin()">Book Now</button>
 </div>
+{% endfor %}
 
 </div>
 </section>
@@ -120,24 +100,24 @@
 
 <div class="steps">
 <div class="card reveal">
-    <h3>1.Register </h3>
-   <p>Create your account</p>
+<h3>1.Register</h3>
+<p>Create your account</p>
 </div>
 
 <div class="card zoom-in">
-   <h3>2. Find Skill</h3>
+<h3>2. Find Skill</h3>
 <p>Search the service you need</p>
 </div>
+
 <div class="card fade-left">
-  <h3>3. Book Service</h3>
-<p> Send booking request you want</p>
+<h3>3. Book Service</h3>
+<p>Send booking request</p>
 </div>
 
 <div class="card reveal">
-   <h3>4. Give Feedback</h3>
+<h3>4. Give Feedback</h3>
 <p>Share your experience</p>
 </div>
-
 </div>
 </section>
 
@@ -147,20 +127,19 @@
 
 <div class="grid">
 <div class="card fade-left">
-    <h3>Trusted Providers</h3>
-   <p>Verified professionals only</p>
+<h3>Trusted Providers</h3>
+<p>Verified professionals only</p>
 </div>
 
 <div class="card zoom-in">
-    <h3>Affordable Pricing</h3>
-    <p>Best rates guaranteed</p>
+<h3>Affordable Pricing</h3>
+<p>Best rates guaranteed</p>
 </div>
 
 <div class="card reveal">
-    <h3>Fast Booking</h3>
-   <p>Quick and easy service booking</p>
+<h3>Fast Booking</h3>
+<p>Quick and easy service booking</p>
 </div>
-
 </div>
 </section>
 
@@ -172,4 +151,3 @@
 
 </body>
 </html>
-

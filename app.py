@@ -2,7 +2,7 @@ import code
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from flask import make_response
+from flask import jsonify, make_response
 from flask import Flask, render_template, request, redirect, session, url_for
 from datetime import datetime, time, date
 import re
@@ -438,10 +438,69 @@ def admin_reviews():
         total_pages=total_pages
     )
 
+@app.route("/search-suggest")
+def search_suggest():
+
+    q = request.args.get("q")
+
+    cursor.execute("SELECT skill_name FROM skills WHERE skill_name LIKE %s LIMIT 5", (f"%{q}%",))
+    results = cursor.fetchall()
+
+    return jsonify([r['skill_name'] for r in results])
+
 # ✅ Home Page
 @app.route("/")
 def home():
-    return render_template("index.html")
+
+    # Stats
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='user'")
+    total_users = cursor.fetchone()['total']
+
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='provider'")
+    total_providers = cursor.fetchone()['total']
+
+    cursor.execute("SELECT COUNT(*) as total FROM bookings")
+    total_bookings = cursor.fetchone()['total']
+
+    # Top Categories
+    cursor.execute("""
+    SELECT category, COUNT(*) as total
+    FROM skills
+    GROUP BY category
+    ORDER BY total DESC
+    LIMIT 4
+    """)
+    top_categories = cursor.fetchall()
+
+    # Skills + Rating
+    cursor.execute("""
+SELECT s.*, u.name as provider_name,
+
+ROUND(AVG(f.rating),1) as avg_rating,
+COUNT(DISTINCT f.feedback_id) as total_reviews,
+COUNT(DISTINCT b.booking_id) as total_bookings
+
+FROM skills s
+
+JOIN users u ON s.provider_id = u.user_id
+LEFT JOIN feedback f ON s.skill_id = f.skill_id
+LEFT JOIN bookings b ON s.skill_id = b.skill_id
+
+GROUP BY s.skill_id
+HAVING total_bookings >= 1 OR total_reviews >= 2                 
+ORDER BY total_bookings DESC, avg_rating DESC
+LIMIT 3                 
+""")
+    
+    skills = cursor.fetchall()
+
+    return render_template("index.html",
+        total_users=total_users,
+        total_providers=total_providers,
+        total_bookings=total_bookings,
+        top_categories=top_categories,
+        skills=skills
+    )
 
 
 # ✅ Register (Email OR Phone + Confirm Password)

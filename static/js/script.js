@@ -100,31 +100,6 @@ el.classList.remove("active");
 window.addEventListener("scroll", revealOnScroll);
 window.addEventListener("load", revealOnScroll);
 
-/* SEARCH SUGGESTION */
-const data = ["Car Wash","AC Repair","Computer Repair","Electrician"];
-
-function suggest(){
-let input = document.getElementById("searchInput").value.toLowerCase();
-let box = document.getElementById("suggestions");
-
-box.innerHTML = "";
-if(input==="") return;
-
-data.forEach(item=>{
-if(item.toLowerCase().includes(input)){
-let div = document.createElement("div");
-div.innerText = item;
-
-div.onclick = ()=>{
-document.getElementById("searchInput").value = item;
-box.innerHTML="";
-};
-
-box.appendChild(div);
-}
-});
-}
-
 /* ROUTES */
 function goCategory(cat){
 window.location.href="/all-skills?category="+cat;
@@ -139,3 +114,31 @@ let val=document.getElementById("searchInput").value;
 window.location.href="/all-skills?search="+val;
 }
 
+
+function suggestLive(){
+let input = document.getElementById("searchInput").value;
+let box = document.getElementById("suggestions");
+
+if(input.length < 1){
+box.innerHTML = "";
+return;
+}
+
+fetch("/search-suggest?q="+input)
+.then(res => res.json())
+.then(data=>{
+box.innerHTML = "";
+
+data.forEach(item=>{
+let div = document.createElement("div");
+div.innerText = item;
+
+div.onclick = ()=>{
+document.getElementById("searchInput").value = item;
+box.innerHTML="";
+};
+
+box.appendChild(div);
+});
+});
+}

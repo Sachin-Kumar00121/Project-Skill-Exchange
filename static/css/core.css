@@ -155,7 +155,7 @@ body[data-theme="dark"] .input-group select {
 .home-page{
 margin:0;
 font-family:'Poppins',sans-serif;
-background:linear-gradient(270deg,#0f172a,#1e3a8a,#9333ea);
+background:linear-gradient(270deg,#1c8369,#093ed1,#ceba09);
 background-size:600% 600%;
 animation:bgMove 12s infinite;
 color:white;
