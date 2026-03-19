@@ -438,21 +438,27 @@ def admin_reviews():
         total_pages=total_pages
     )
 
+# 🔍 SEARCH SUGGEST
 @app.route("/search-suggest")
 def search_suggest():
-
     q = request.args.get("q")
 
-    cursor.execute("SELECT skill_name FROM skills WHERE skill_name LIKE %s LIMIT 5", (f"%{q}%",))
-    results = cursor.fetchall()
+    cursor.execute("""
+    SELECT skill_name 
+    FROM skills 
+    WHERE skill_name LIKE %s 
+    LIMIT 5
+    """, (f"%{q}%",))
 
+    results = cursor.fetchall()
     return jsonify([r['skill_name'] for r in results])
 
-# ✅ Home Page
+
+# 🏠 HOME PAGE
 @app.route("/")
 def home():
 
-    # Stats
+    # ✅ STATS
     cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='user'")
     total_users = cursor.fetchone()['total']
 
@@ -462,7 +468,8 @@ def home():
     cursor.execute("SELECT COUNT(*) as total FROM bookings")
     total_bookings = cursor.fetchone()['total']
 
-    # Top Categories
+
+    # ✅ TOP CATEGORIES
     cursor.execute("""
     SELECT category, COUNT(*) as total
     FROM skills
@@ -472,36 +479,71 @@ def home():
     """)
     top_categories = cursor.fetchall()
 
-    # Skills + Rating
+
+    # ✅ POPULAR SERVICES 
     cursor.execute("""
-SELECT s.*, u.name as provider_name,
+    SELECT s.*, u.name as provider_name,
 
-ROUND(AVG(f.rating),1) as avg_rating,
-COUNT(DISTINCT f.feedback_id) as total_reviews,
-COUNT(DISTINCT b.booking_id) as total_bookings
+    ROUND(AVG(f.rating),1) as avg_rating,
+    COUNT(DISTINCT f.feedback_id) as total_reviews,
+    COUNT(DISTINCT b.booking_id) as total_bookings
 
-FROM skills s
+    FROM skills s
+    JOIN users u ON s.provider_id = u.user_id
+    LEFT JOIN feedback f ON s.skill_id = f.skill_id
+    LEFT JOIN bookings b ON s.skill_id = b.skill_id
 
-JOIN users u ON s.provider_id = u.user_id
-LEFT JOIN feedback f ON s.skill_id = f.skill_id
-LEFT JOIN bookings b ON s.skill_id = b.skill_id
-
-GROUP BY s.skill_id
-HAVING total_bookings >= 1 OR total_reviews >= 2                 
-ORDER BY total_bookings DESC, avg_rating DESC
-LIMIT 3                 
-""")
-    
+    GROUP BY s.skill_id
+    ORDER BY total_bookings DESC, avg_rating DESC
+    LIMIT 3
+    """)
     skills = cursor.fetchall()
+
+
+    #  TRENDING
+    cursor.execute("""
+    SELECT s.*, u.name as provider_name,
+    COUNT(b.booking_id) as bookings
+
+    FROM skills s
+    JOIN users u ON s.provider_id = u.user_id
+    JOIN bookings b ON s.skill_id = b.skill_id
+
+    GROUP BY s.skill_id
+    ORDER BY bookings DESC
+    LIMIT 3
+    """)
+    trending_skills = cursor.fetchall()
+
+
+    # 📂 CATEGORY BASED
+    cursor.execute("SELECT DISTINCT category FROM skills LIMIT 3")
+    categories = cursor.fetchall()
+
+    category_skills = []
+
+    for cat in categories:
+        cursor.execute("""
+        SELECT * FROM skills 
+        WHERE category=%s 
+        LIMIT 4
+        """, (cat['category'],))
+
+        category_skills.append({
+            "category": cat['category'],
+            "skills": cursor.fetchall()
+        })
+
 
     return render_template("index.html",
         total_users=total_users,
         total_providers=total_providers,
         total_bookings=total_bookings,
         top_categories=top_categories,
-        skills=skills
+        skills=skills,
+        trending_skills=trending_skills,
+        category_skills=category_skills
     )
-
 
 # ✅ Register (Email OR Phone + Confirm Password)
 @app.route("/register/user", methods=["GET", "POST"])

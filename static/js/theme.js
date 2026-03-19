@@ -37,12 +37,25 @@ document.querySelectorAll(".counter").forEach(counter => {
             counter.innerText = Math.ceil(count + increment);
             setTimeout(updateCount, 20);
         } else {
-            counter.innerText = target;
+            counter.innerText = target + "+";
         }
     };
 
     updateCount();
 });
+
+//  Number Format (K, L, M)
+function formatNumber(num){
+if(num >= 1000000){
+return (num/1000000).toFixed(1) + "M";
+}
+else if(num >= 1000){
+return (num/1000).toFixed(1) + "K";
+}
+else{
+return num;
+}
+}
 
 function showToast(message) {
     const toast = document.getElementById("toast");

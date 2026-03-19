@@ -12,86 +12,173 @@
 <body class="home-page">
 
 <!-- NAVBAR -->
-<nav class="navbar">
-<div class="logo">⚡ SkillX</div>
+<nav class="navbar reveal">
+<div class="logo reveal">⚡ SkillX</div>
 
-<div class="nav-links">
-<a href="/">Home</a>
-<a href="/all-skills">Skills</a>
-<a href="/login">Login</a>
+<div class="nav-links reveal">
+<a href="/" class="reveal">Home</a>
+<a href="/all-skills" class="reveal">Skills</a>
+<a href="#about" class="reveal">About</a>
+<a href="#contact" class="reveal">Contact</a>
+<a href="/login" class="reveal">Login</a>
 
-<div class="dropdown">
-<span class="register-btn">Register ⬇</span>
+<div class="dropdown reveal">
+<span class="register-btn zoom-in">Register ⬇</span>
 <div class="dropdown-menu">
 <a href="/register/user">User Signup</a>
 <br>
 <a href="/register/provider">Provider Signup</a>
 </div>
 </div>
-
 </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
 <h1 class="reveal">Find Services Instantly</h1>
-<p class="reveal">Best professionals near you</p>
+<p class="fade-left">Best professionals near you</p>
 
-<div class="search-box reveal">
+<div class="search-box zoom-in">
 <input id="searchInput" placeholder="Search skills..." onkeyup="suggestLive()">
 <button onclick="goSearch()">Search</button>
 <div id="suggestions"></div>
 </div>
 </section>
 
-<!-- STATS (DYNAMIC) -->
+<!-- STATS -->
 <section class="section">
 <div class="grid">
-<div class="skill-card glass reveal"><h2>{{ total_users }}</h2><p>Users</p></div>
-<div class="skill-card glass zoom-in"><h2>{{ total_providers }}</h2><p>Providers</p></div>
-<div class="skill-card glass fade-left"><h2>{{ total_bookings }}</h2><p>Bookings</p></div>
+
+<div class="skill-card glass reveal">
+    <h2 class="counter" data-target="{{ total_users }}">0</h2>
+    <p>Users</p>
+</div>
+
+<div class="skill-card glass zoom-in">
+    <h2 class="counter" data-target="{{ total_providers }}">0</h2>
+    <p>Providers</p>
+</div>
+
+<div class="skill-card glass fade-left">
+    <h2 class="counter" data-target="{{ total_bookings }}">0</h2>
+    <p>Bookings</p>
+</div>
+
 </div>
 </section>
 
-<!-- TOP CATEGORIES (DYNAMIC) -->
+<!-- TOP CATEGORIES -->
 <section class="section">
 <h2 class="reveal">Top Categories</h2>
-
 <div class="grid">
 
+{% if top_categories|length == 0 %}
+<p class="reveal" style="text-align:center;">No categories available</p>
+{% endif %}
+
 {% for cat in top_categories %}
-<div class="card" onclick="goCategory('{{ cat.category }}')">
-<h3>{{ cat.category }}</h3>
-<p>{{ cat.total }} Services</p>
+<div class="card zoom-in" onclick="goCategory('{{ cat.category }}')">
+<h3 class="reveal">{{ cat.category }}</h3>
+<p class="fade-left">{{ cat.total }} Services</p>
 </div>
 {% endfor %}
 
 </div>
 </section>
 
-<!-- SERVICES (DYNAMIC + RATING) -->
+<!-- POPULAR SERVICES -->
 <section class="section">
 <h2 class="reveal">Popular Services</h2>
 
 <div class="grid">
 
-{% for skill in skills %}
-<div class="skill-card service-card">
-<h3>{{ skill.skill_name }}</h3>
-<p>Provider : {{ skill.provider_name }}</p>
-<p>₹{{ skill.price }}</p>
+{% if skills|length == 0 %}
+<p class="reveal" style="text-align:center;">No services found</p>
+{% endif %}
 
-<p>
-⭐ {{ skill.avg_rating if skill.avg_rating else "New" }} 
+{% for skill in skills %}
+<div class="skill-card service-card zoom-in">
+
+{% if skill.avg_rating and skill.avg_rating >= 4.5 %}
+<span class="top-rated reveal">⭐ Top Rated</span>
+{% endif %}
+
+<h3 class="reveal">{{ skill.skill_name }}</h3>
+<p class="fade-left">Provider : {{ skill.provider_name }}</p>
+<p class="zoom-in">₹{{ skill.price }}</p>
+
+<p class="reveal">
+⭐ {{ "%.1f"|format(skill.avg_rating) if skill.avg_rating else "New" }}
 ({{ skill.total_reviews }} reviews)
 </p>
 
-<br>
-<button onclick="goLogin()">Book Now</button>
+<button class="zoom-in" onclick="goLogin()">Book Now</button>
 </div>
 {% endfor %}
 
 </div>
+
+<div style="text-align:center; margin-top:20px;">
+<button class="zoom-in" onclick="window.location.href='/all-skills'">
+View All Services →
+</button>
+</div>
+
+</section>
+
+<!-- TRENDING -->
+<section class="section">
+<h2 class="reveal">🔥 Trending Skills</h2>
+
+<div class="grid">
+
+{% if trending_skills|length == 0 %}
+<p class="reveal" style="text-align:center;">No trending skills yet</p>
+{% endif %}
+
+{% for skill in trending_skills %}
+<div class="skill-card service-card fade-left">
+
+<span class="badge zoom-in">🔥 Trending</span>
+
+<h3 class="reveal">{{ skill.skill_name }}</h3>
+<p class="fade-left">Provider : {{ skill.provider_name }}</p>
+<p class="zoom-in">₹{{ skill.price }}</p>
+
+<p class="reveal">
+⭐ {{ "%.1f"|format(skill.avg_rating) if skill.avg_rating else "New" }}
+</p>
+
+<button class="zoom-in" onclick="goLogin()">Book Now</button>
+</div>
+{% endfor %}
+
+</div>
+</section>
+
+<!-- CATEGORY BASED -->
+<section class="section">
+<h2 class="reveal">Category Based Services</h2>
+<br>
+
+{% if category_skills|length == 0 %}
+<p class="reveal" style="text-align:center;">No category data</p>
+{% endif %}
+
+{% for cat in category_skills %}
+<h3 class="fade-left" style="margin-left:20px;">{{ cat.category }}</h3>
+
+<div class="grid">
+{% for skill in cat.skills %}
+<div class="skill-card zoom-in">
+<h3 class="reveal">{{ skill.skill_name }}</h3>
+<p class="fade-left">₹{{ skill.price }}</p>
+<button class="zoom-in" onclick="goLogin()">Book Now</button>
+</div>
+{% endfor %}
+</div>
+
+{% endfor %}
 </section>
 
 <!-- HOW IT WORKS -->
@@ -99,6 +186,7 @@
 <h2 class="reveal">How It Works?</h2>
 
 <div class="steps">
+
 <div class="card reveal">
 <h3>1.Register</h3>
 <p>Create your account</p>
@@ -106,7 +194,7 @@
 
 <div class="card zoom-in">
 <h3>2. Find Skill</h3>
-<p>Search the service you need</p>
+<p>Search for the service you need</p>
 </div>
 
 <div class="card fade-left">
@@ -118,6 +206,7 @@
 <h3>4. Give Feedback</h3>
 <p>Share your experience</p>
 </div>
+
 </div>
 </section>
 
@@ -138,15 +227,53 @@
 
 <div class="card reveal">
 <h3>Fast Booking</h3>
-<p>Quick and easy service booking</p>
+<p>Quick and easy booking</p>
 </div>
 </div>
 </section>
 
+<!-- ABOUT -->
+<section class="section" id="about">
+<h2 class="reveal">About SkillX</h2>
+
+<div class="card zoom-in">
+<p>
+SkillX is a modern platform connecting users with trusted professionals.
+   Fast, reliable and affordable services at your fingertips.
+</p>
+</div>
+</section>
+
 <!-- FOOTER -->
-<footer>
-<h3>© 2026 SkillX Platform</h3>
+<footer id="contact" class="reveal">
+
+<div class="footer-grid">
+
+<div class="fade-left">
+<h3>⚡ SkillX</h3>
 <p>Modern Service Marketplace</p>
+</div>
+
+<div class="zoom-in">
+<h4>Quick Links</h4>
+<p><a href="/">Home</a></p>
+<p><a href="/all-skills">Services</a></p>
+<p><a href="#about">About</a></p>
+</div>
+
+<div class="fade-left" >
+<h4>Contact Us</h4>
+<p>Email: support@skillx.com</p>
+<p>Phone: +91 9876543210</p>
+<p>Location: Meerut, Uttar Pradesh</p>
+</div>
+
+</div>
+
+<hr>
+
+<p class="reveal" style="text-align:center;">© 2026 SkillX Platform</p>
+
 </footer>
 
 </body>

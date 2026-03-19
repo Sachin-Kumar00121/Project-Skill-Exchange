@@ -68,7 +68,66 @@ function convertTo12Hour(time24) {
     return hours + ":" + minutes + " " + ampm;
 }
 
-/* DROPDOWN FIX */
+/* Counter Animation */
+let counterStarted = false;
+
+//  Number Format (K, L, M)
+function formatNumber(num){
+if(num >= 1000000){
+return (num/1000000).toFixed(1) + "M";
+}
+else if(num >= 1000){
+return (num/1000).toFixed(1) + "K";
+}
+else{
+return num;
+}
+}
+
+function startCounters(){
+if(counterStarted) return;
+
+const counters = document.querySelectorAll(".counter");
+
+counters.forEach(counter => {
+
+const target = +counter.getAttribute("data-target");
+let count = 0;
+const speed = 60;
+const increment = target / speed;
+
+function updateCount(){
+if(count < target){
+count += increment;
+counter.innerText = formatNumber(Math.ceil(count));
+setTimeout(updateCount, 25);
+} else {
+counter.innerText = formatNumber(target) + "+";
+}
+}
+
+updateCount();
+});
+
+counterStarted = true;
+}
+
+//  Scroll trigger
+window.addEventListener("scroll", () => {
+const section = document.querySelector(".section");
+
+if(section){
+const top = section.getBoundingClientRect().top;
+const windowHeight = window.innerHeight;
+
+if(top < windowHeight - 30){
+startCounters();
+}
+}
+});
+
+
+// DROPDOWN
 const btn = document.querySelector(".register-btn");
 const menu = document.querySelector(".dropdown-menu");
 
@@ -81,18 +140,27 @@ document.addEventListener("click",()=>{
 menu.classList.remove("show");
 });
 
-/* REPEAT SCROLL ANIMATION */
+// ACTIVE LINK
+document.querySelectorAll(".nav-links a").forEach(link=>{
+if(link.href === window.location.href){
+link.classList.add("active");
+}
+});
+
+// 🔥 SCROLL ANIMATION (FINAL PERFECT)
 function revealOnScroll(){
 const elements = document.querySelectorAll(".reveal, .fade-left, .zoom-in");
 
-elements.forEach(el=>{
-const windowHeight = window.innerHeight;
+elements.forEach((el,i)=>{
 const top = el.getBoundingClientRect().top;
+const windowHeight = window.innerHeight;
 
-if(top < windowHeight - 100){
+if(top < windowHeight - 30){
+setTimeout(()=>{
 el.classList.add("active");
+}, i * 80);
 }else{
-el.classList.remove("active"); 
+el.classList.remove("active"); // repeat animation
 }
 });
 }
@@ -100,7 +168,16 @@ el.classList.remove("active");
 window.addEventListener("scroll", revealOnScroll);
 window.addEventListener("load", revealOnScroll);
 
-/* ROUTES */
+// SMOOTH SCROLL
+document.querySelectorAll('a[href^="#"]').forEach(anchor=>{
+anchor.addEventListener("click",function(e){
+e.preventDefault();
+document.querySelector(this.getAttribute("href"))
+.scrollIntoView({behavior:"smooth"});
+});
+});
+
+// ROUTES
 function goCategory(cat){
 window.location.href="/all-skills?category="+cat;
 }
@@ -114,8 +191,14 @@ let val=document.getElementById("searchInput").value;
 window.location.href="/all-skills?search="+val;
 }
 
+// LIVE SEARCH
+let timer;
 
 function suggestLive(){
+clearTimeout(timer);
+
+timer = setTimeout(()=>{
+
 let input = document.getElementById("searchInput").value;
 let box = document.getElementById("suggestions");
 
@@ -141,4 +224,6 @@ box.innerHTML="";
 box.appendChild(div);
 });
 });
+
+},300);
 }
