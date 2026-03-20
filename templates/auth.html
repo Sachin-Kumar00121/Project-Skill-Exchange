@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillX Auth</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+</head>
+
+<body>
+
+<div class="auth-wrapper">
+
+    <div class="background-shape"></div>
+    <div class="secondary-shape"></div>
+
+    <!-- LOGIN -->
+    <div class="credentials-panel signin">
+        <h2 class="slide-element">Login</h2>
+
+        {% if error %}
+        <p style="color:red; text-align:center;">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="/login">
+
+            <div class="field-wrapper slide-element">
+                <input type="text" name="identifier" required>
+                <label>Email or Phone</label>
+                <i class="fa-solid fa-user"></i>
+            </div>
+
+            <div class="field-wrapper slide-element">
+                <input type="password" name="password" id="loginPass" required>
+                <label>Password</label>
+                <i class="fa-solid fa-lock toggle-icon" onclick="togglePassword('loginPass',this)"></i>
+            </div>
+
+            <div class="field-wrapper slide-element">
+                <button class="submit-button" type="submit">Login</button>
+            </div>
+            <div class="switch-link slide-element forgot-link">
+            <p><a href="/change-password">Forgot Password?</a></p>
+            </div>
+
+            <div class="switch-link slide-element">
+                <p>Don't have an account? <br>
+                <a href="#" class="register-trigger">Sign Up</a></p>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- RIGHT TEXT -->
+    <div class="welcome-section signin">
+        <h2 class="slide-element">WELCOME BACK!</h2>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="credentials-panel signup">
+        <h2 class="slide-element">Register</h2>
+
+        {% if error %}
+        <p style="color:red; text-align:center;">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="/register" id="signupForm">
+
+            <input type="hidden" name="role" id="roleInput">
+
+            <div class="field-wrapper slide-element">
+                <input type="text" name="name" required>
+                <label>Name</label>
+                <i class="fa-solid fa-user"></i>
+            </div>
+
+            <div class="field-wrapper slide-element">
+                <input type="text" name="identifier" required>
+                <label>Email or Phone</label>
+                <i class="fa-solid fa-envelope"></i>
+            </div>
+
+            <div class="field-wrapper slide-element">
+                <input type="password" name="password" id="pass" required onkeyup="checkStrength()">
+                <label>Password</label>
+                <i class="fa-solid fa-lock toggle-icon" onclick="togglePassword('pass',this)"></i>
+               <Small id="strengthMessage"> </Small>
+            </div>
+
+            <!-- ROLE BUTTON -->
+            <div class="field-wrapper slide-element role-buttons">
+                <button type="button" onclick="setRole('user',this)">Register as User</button>
+                <button type="button" onclick="setRole('provider',this)">Register as Provider</button>
+            </div>
+
+            <div class="field-wrapper slide-element">
+                <button class="submit-button" type="submit">Register</button>
+            </div>
+
+            <div class="switch-link slide-element">
+                <p>Already have an account? <br>
+                <a href="#" class="login-trigger">Sign In</a></p>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- LEFT TEXT -->
+    <div class="welcome-section signup">
+        <h2 class="slide-element">WELCOME!</h2>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+</body>
+</html>
+

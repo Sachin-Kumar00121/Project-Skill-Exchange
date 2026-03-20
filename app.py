@@ -545,55 +545,53 @@ def home():
         category_skills=category_skills
     )
 
-# ✅ Register (Email OR Phone + Confirm Password)
-@app.route("/register/user", methods=["GET", "POST"])
-def register_user():
-    return register_common("user")
+# ✅ SINGLE REGISTER ROUTE (FINAL)
+@app.route("/register", methods=["GET", "POST"])
+def register():
 
-
-@app.route("/register/provider", methods=["GET", "POST"])
-def register_provider():
-    return register_common("provider")
-
-def register_common(role):
     if request.method == "GET":
-        return render_template("register.html", role=role)
+        return render_template("auth.html") 
+
+    role = request.form.get("role")  
+
+    if not role:
+        return render_template("auth.html", error="Please select User or Provider")
 
     name = request.form["name"].strip()
     identifier = request.form["identifier"].strip().lower()
     password = request.form["password"]
     confirm_password = request.form["confirm_password"]
 
-    # Confirm password check
+    # ✅ Confirm password check
     if password != confirm_password:
-        return "Password and Confirm Password do not match"
-    
+        return render_template("auth.html", error="Password and Confirm Password do not match")
 
-    # Strong password validation
+    # ✅ Strong password validation
     pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$'
     if not re.match(pattern, password):
-        return render_template("register.html", role=role, error="Password must be at least 8 characters long and include uppercase, lowercase, number and special character.")
+        return render_template("auth.html",
+                               error="Password must be at least 8 characters long and include uppercase, lowercase, number and special character.")
 
-
-
-    # Detect email/phone
+    # ✅ Detect email / phone
     is_email = "@" in identifier
-    is_phone = identifier.isdigit() and len(identifier) == 10  # 10 digit
+    is_phone = identifier.isdigit() and len(identifier) == 10
 
     if not (is_email or is_phone):
-        return "Please enter a valid Email or 10-digit Phone number"
+        return render_template("auth.html",
+                               error="Enter valid Email or 10-digit Phone")
 
-    # Duplicate check
+    # ✅ Duplicate check
     if is_email:
         cursor.execute("SELECT user_id FROM users WHERE email=%s", (identifier,))
     else:
         cursor.execute("SELECT user_id FROM users WHERE phone=%s", (identifier,))
+
     if cursor.fetchone():
-        return "Already registered. Please login."
+        return render_template("auth.html", error="Already registered. Please login.")
 
     hashed_password = generate_password_hash(password)
 
-    # Insert with role
+    # ✅ Insert user
     if is_email:
         cursor.execute(
             "INSERT INTO users (name, email, phone, password, id_type, role) VALUES (%s,%s,%s,%s,%s,%s)",
@@ -628,12 +626,12 @@ def login():
 
         
             if user["role"] == "admin":
-                return render_template("login.html",
+                return render_template("auth.html",
                                        error="Admin must login from Admin Panel")
 
 
             if user.get("status") == "blocked":
-                return render_template("login.html",
+                return render_template("auth.html",
                                       error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
 
         
@@ -644,66 +642,71 @@ def login():
             return redirect("/dashboard")
 
         else:
-            return render_template("login.html",
+            return render_template("auth.html",
                                    error="Invalid Password or User not found")
 
-    return render_template("login.html")
-
-import re
-from werkzeug.security import generate_password_hash, check_password_hash
+    return render_template("auth.html")
 
 #✅ Change Password Route
 @app.route("/change-password", methods=["GET", "POST"])
 def change_password():
 
-    if "user_id" not in session:
-        return redirect("/login")
-
-    user_id = session["user_id"]
+    user_id = session.get("user_id")  
 
     if request.method == "POST":
 
-        old_password = request.form["old_password"]
         new_password = request.form["new_password"]
         confirm_password = request.form["confirm_password"]
+
+        # =========================
+        # 🔹 CASE 1: NOT LOGGED IN (Forgot Password)
+        # =========================
+        if not user_id:
+            identifier = request.form.get("identifier")
+
+            if not identifier:
+                return render_template("change_password.html",
+                                       error="Enter Email or Phone")
+
+            if new_password != confirm_password:
+                return render_template("change_password.html",
+                                       error="Passwords do not match")
+
+            new_hash = generate_password_hash(new_password)
+
+            if "@" in identifier:
+                cursor.execute("UPDATE users SET password=%s WHERE email=%s",
+                               (new_hash, identifier))
+            else:
+                cursor.execute("UPDATE users SET password=%s WHERE phone=%s",
+                               (new_hash, identifier))
+
+            db.commit()
+
+            return render_template("change_password.html",
+                                   success="Password reset successful")
+
+        # =========================
+        # 🔹 CASE 2: LOGGED IN
+        # =========================
+        old_password = request.form["old_password"]
 
         cursor.execute("SELECT password FROM users WHERE user_id=%s", (user_id,))
         user = cursor.fetchone()
 
-        # Old password verify
         if not check_password_hash(user["password"], old_password):
             return render_template("change_password.html",
-                                   error="Old password is incorrect")
+                                   error="Old password incorrect")
 
-        # Password match check
         if new_password != confirm_password:
             return render_template("change_password.html",
                                    error="Passwords do not match")
 
-        # Strong password rule
-        if len(new_password) < 8:
-            return render_template("change_password.html",
-                                   error="Password must be at least 8 characters")
-
-        if not re.search(r"[A-Z]", new_password):
-            return render_template("change_password.html",
-                                   error="Password must contain uppercase letter")
-
-        if not re.search(r"[a-z]", new_password):
-            return render_template("change_password.html",
-                                   error="Password must contain lowercase letter")
-
-        if not re.search(r"[0-9]", new_password):
-            return render_template("change_password.html",
-                                   error="Password must contain a number")
-
-        # Update password
         new_hash = generate_password_hash(new_password)
 
-        cursor.execute(
-            "UPDATE users SET password=%s WHERE user_id=%s",
-            (new_hash, user_id)
-        )
+        cursor.execute("UPDATE users SET password=%s WHERE user_id=%s",
+                       (new_hash, user_id))
+
         db.commit()
 
         return render_template("change_password.html",

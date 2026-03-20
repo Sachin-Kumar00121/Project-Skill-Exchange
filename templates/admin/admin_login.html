@@ -4,9 +4,10 @@
     <title>Admin Login</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script defer src="{{ url_for('static', filename='js/script.js') }}"></script>
 
 </head>
 
@@ -38,7 +39,7 @@
                        id="password"
                        placeholder="Password"
                        required>
-                <span onclick="togglePassword()">👁</span>
+                <i class="fa-solid fa-lock toggle-icon" onclick="togglePassword('password',this)"></i>
             </div>
 
             <button type="submit" class="btn btn-primary btn-full">
@@ -50,13 +51,6 @@
     </div>
 
 </div>
-
-<script>
-function togglePassword() {
-    var field = document.getElementById("password");
-    field.type = field.type === "password" ? "text" : "password";
-}
-</script>
 
 </body>
 </html>

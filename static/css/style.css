@@ -14,13 +14,14 @@ h2 {
 
 /* Form Card */
 form {
-    width: 350px;              /* fixed width */
-    margin: 30px auto;         /* center */
+    width: 350px;              
+    margin: 30px auto;        
     padding: 25px;
     background: white;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
+
 
 /* Input fields */
 form input {
@@ -67,8 +68,7 @@ form textarea {
 }
 
 form textarea {
-    resize: none;        /* optional - size fix */
-    min-height: 100px;   /* height same style */
+    resize: none;       
 }
 
 .password-wrapper {

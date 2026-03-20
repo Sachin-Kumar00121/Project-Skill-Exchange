@@ -1,40 +1,4 @@
 
-function togglePassword(id) {
-    var input = document.getElementById(id);
-
-    if (input.type === "password") {
-        input.type = "text";
-    } else {
-        input.type = "password";
-    }
-}
-
-function checkStrength() {
-    var password = document.getElementById("password").value;
-    var message = document.getElementById("strengthMessage");
-
-    var strength = 0;
-
-    if (password.length >= 8) strength++;
-    if (password.match(/[a-z]/)) strength++;
-    if (password.match(/[A-Z]/)) strength++;
-    if (password.match(/[0-9]/)) strength++;
-    if (password.match(/[@$!%*?&]/)) strength++;
-
-    if (strength <= 2) {
-        message.innerHTML = "Weak Password";
-        message.style.color = "red";
-    } 
-    else if (strength == 3 || strength == 4) {
-        message.innerHTML = "Medium Strength";
-        message.style.color = "orange";
-    } 
-    else {
-        message.innerHTML = "Strong Password";
-        message.style.color = "green";
-    }
-}
-
 function openPopup(skillId, price, unit) {
     document.getElementById("bookingPopup").style.display = "block";
     document.getElementById("popupSkillId").value = skillId;
@@ -227,3 +191,60 @@ box.appendChild(div);
 
 },300);
 }
+
+/* PASSWORD TOGGLE */
+function togglePassword(id, el){
+    let input = document.getElementById(id);
+
+    if(input.type === "password"){
+        input.type = "text";
+
+        // lock → unlock
+        el.classList.remove("fa-lock");
+        el.classList.add("fa-lock-open");
+    } else {
+        input.type = "password";
+
+        // unlock → lock
+        el.classList.remove("fa-lock-open");
+        el.classList.add("fa-lock");
+    }
+}
+
+/* PASSWORD STRENGTH */
+function checkStrength() {
+    var password = document.getElementById("new_password").value;
+    var strength = document.getElementById("strength");
+
+    if (password.length < 8) {
+        strength.innerHTML = "Weak (minimum 8 characters)";
+        strength.style.color = "red";
+        return;
+    }
+
+    var strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/;
+
+    if (strongRegex.test(password)) {
+        strength.innerHTML = "Strong Password";
+        strength.style.color = "green";
+    } else {
+        strength.innerHTML = "Medium (Use uppercase, lowercase & number)";
+        strength.style.color = "orange";
+    }
+}
+
+/* PASSWORD MATCH */
+function checkMatch() {
+    var pass = document.getElementById("new_password").value;
+    var confirm = document.getElementById("confirm_password").value;
+    var match = document.getElementById("match");
+
+    if (pass === confirm) {
+        match.innerHTML = "Passwords Match";
+        match.style.color = "green";
+    } else {
+        match.innerHTML = "Passwords Do Not Match";
+        match.style.color = "red";
+    }
+}
+
