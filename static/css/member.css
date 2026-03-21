@@ -1,13 +1,245 @@
-.member-wrapper {
-    padding: 40px;
-    max-width: 1200px;
-    margin: auto;
+/* ================= RESET ================= */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-.hero-box {
-    background: linear-gradient(135deg,#6366f1,#8b5cf6);
-    color: white;
-    padding: 40px;
-    border-radius: 18px;
+/* ================= SIDEBAR ================= */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 230px;
+    height: 100vh;
+    background: #0f172a;
+    padding: 20px;
+    z-index: 100;
+}
+
+.logo {
+    color: #00d4ff;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin: 12px 0;
+}
+
+.sidebar ul li a {
+    color: #fff;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background: #00d4ff;
+    color: #000;
+}
+
+.logout {
+    background: #ff4d4d;
+    color: #fff !important;
+}
+
+/* ================= MAIN ================= */
+.main-content {
+    margin-left: 230px;
+    padding: 20px 25px;
+    min-height: 100vh;
+}
+
+/* ================= TOPBAR FINAL PERFECT ================= */
+.topbar {
+    position: relative;   /* 🔥 important */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-content: space-between;
     margin-bottom: 30px;
+    min-height: 50px; 
+}
+
+/* LEFT */
+.top-left {
+    z-index: 1;
+}
+
+/* RIGHT */
+.top-right {
+    z-index: 1;
+}
+
+/* CENTER (BADGES PERFECT CENTER) */
+.top-center {
+    position: absolute;          
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    
+    display: flex;
+    gap: 15px;
+    align-items: center;
+
+}
+
+/* ================= BADGES ================= */
+.topbar .badge {
+    position: static !important;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.role {
+    background: #e2e8f0;
+    color: #000;
+}
+
+.active-status {
+    background: #22c55e;
+    color: #fff;
+}
+
+.blocked {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* ================= HERO ================= */
+.hero-box {
+    background: linear-gradient(135deg,#00d4ff,#6366f1);
+    padding: 25px;
+    border-radius: 12px;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+/* ================= GRID ================= */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+    gap: 20px;
+    margin: 25px 0;
+}
+
+/* ================= CARD ================= */
+.card {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 12px #00d4ff;
+}
+
+.card h3 {
+    font-size: 28px;
+    color: #00d4ff;
+    margin-bottom: 5px;
+}
+
+.card p {
+    font-size: 14px;
+}
+
+/* ================= ACTION ================= */
+.quick-actions {
+    margin: 20px 0;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 10px 18px;
+    background: #00d4ff;
+    color: #000;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.action-btn:hover {
+    background: #00b8d4;
+}
+
+/* ================= RECENT ================= */
+.recent-box {
+    margin-top: 30px;
+}
+
+.recent-box h3 {
+    margin-bottom: 10px;
+}
+
+.recent-item {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+/* ================= LIGHT THEME ================= */
+body[data-theme="light"] {
+    background: #0f172a;
+    color: #fff;
+}
+
+body[data-theme="light"] .recent-item {
+    background: #1e293b;
+}
+
+/* ================= DARK THEME ================= */
+body[data-theme="dark"] {
+    background: #f1f5f9;
+    color: #000;
+}
+
+/* sidebar */
+body[data-theme="dark"] .sidebar {
+    background: #ffffff;
+}
+
+body[data-theme="dark"] .sidebar a {
+    color: #000;
+}
+
+/* cards */
+body[data-theme="dark"] .card {
+    background: #ffffff;
+    color: #000;
+}
+
+/* hero */
+body[data-theme="dark"] .hero-box {
+    color: #fff;
+}
+
+/* recent */
+body[data-theme="dark"] .recent-item {
+    background: #e2e8f0;
+}
+
+/* buttons */
+body[data-theme="dark"] .action-btn {
+    background: #6366f1;
+    color: #fff;
 }

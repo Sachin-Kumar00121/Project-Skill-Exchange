@@ -196,3 +196,14 @@ h2 {
 .toggle-icon:hover {
     color: #00d4ff;
 }
+
+/*  REMOVE DEFAULT */
+
+input::-ms-reveal,
+input::-ms-clear,
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
+}

@@ -468,7 +468,6 @@ def home():
     cursor.execute("SELECT COUNT(*) as total FROM bookings")
     total_bookings = cursor.fetchone()['total']
 
-
     # ✅ TOP CATEGORIES
     cursor.execute("""
     SELECT category, COUNT(*) as total
@@ -478,7 +477,6 @@ def home():
     LIMIT 4
     """)
     top_categories = cursor.fetchall()
-
 
     # ✅ POPULAR SERVICES 
     cursor.execute("""
@@ -499,7 +497,6 @@ def home():
     """)
     skills = cursor.fetchall()
 
-
     #  TRENDING
     cursor.execute("""
     SELECT s.*, u.name as provider_name,
@@ -514,7 +511,6 @@ def home():
     LIMIT 3
     """)
     trending_skills = cursor.fetchall()
-
 
     # 📂 CATEGORY BASED
     cursor.execute("SELECT DISTINCT category FROM skills LIMIT 3")
@@ -534,7 +530,6 @@ def home():
             "skills": cursor.fetchall()
         })
 
-
     return render_template("index.html",
         total_users=total_users,
         total_providers=total_providers,
@@ -545,7 +540,7 @@ def home():
         category_skills=category_skills
     )
 
-# ✅ SINGLE REGISTER ROUTE (FINAL)
+# ✅ SINGLE REGISTER ROUTE
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
@@ -555,22 +550,18 @@ def register():
     role = request.form.get("role")  
 
     if not role:
-        return render_template("auth.html", error="Please select User or Provider")
+        return render_template("auth.html", error="Please select User or Provider", show_signup=True)
 
     name = request.form["name"].strip()
     identifier = request.form["identifier"].strip().lower()
     password = request.form["password"]
-    confirm_password = request.form["confirm_password"]
-
-    # ✅ Confirm password check
-    if password != confirm_password:
-        return render_template("auth.html", error="Password and Confirm Password do not match")
+   
 
     # ✅ Strong password validation
     pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$'
     if not re.match(pattern, password):
         return render_template("auth.html",
-                               error="Password must be at least 8 characters long and include uppercase, lowercase, number and special character.")
+                               error="Password must be at least 8 characters long and include uppercase, lowercase, number and special character.", show_signup=True)
 
     # ✅ Detect email / phone
     is_email = "@" in identifier
@@ -578,7 +569,7 @@ def register():
 
     if not (is_email or is_phone):
         return render_template("auth.html",
-                               error="Enter valid Email or 10-digit Phone")
+                               error="Enter valid Email or 10-digit Phone", show_signup=True)
 
     # ✅ Duplicate check
     if is_email:
@@ -587,7 +578,7 @@ def register():
         cursor.execute("SELECT user_id FROM users WHERE phone=%s", (identifier,))
 
     if cursor.fetchone():
-        return render_template("auth.html", error="Already registered. Please login.")
+        return render_template("auth.html", error="Already registered. Please login.", show_signup=True)
 
     hashed_password = generate_password_hash(password)
 
@@ -658,9 +649,8 @@ def change_password():
         new_password = request.form["new_password"]
         confirm_password = request.form["confirm_password"]
 
-        # =========================
-        # 🔹 CASE 1: NOT LOGGED IN (Forgot Password)
-        # =========================
+        # 🔹 CASE 1: NOT LOGGED IN 
+      
         if not user_id:
             identifier = request.form.get("identifier")
 
@@ -686,9 +676,8 @@ def change_password():
             return render_template("change_password.html",
                                    success="Password reset successful")
 
-        # =========================
         # 🔹 CASE 2: LOGGED IN
-        # =========================
+
         old_password = request.form["old_password"]
 
         cursor.execute("SELECT password FROM users WHERE user_id=%s", (user_id,))
@@ -722,19 +711,85 @@ def dashboard():
     if "user_id" not in session:
         return redirect("/login")
 
-    cursor.execute("SELECT status, block_reason FROM users WHERE user_id=%s",
-                   (session["user_id"],))
+    user_id = session["user_id"]
+  
+    # USER STATUS
+    
+    cursor.execute("SELECT status, block_reason FROM users WHERE user_id=%s", (user_id,))
     user = cursor.fetchone()
 
     if user["status"] == "blocked":
         session.clear()
-        return render_template("login.html",
+        return render_template("auth.html",
                                error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
 
+    # 📊 STATS
+
+    # Total bookings
+    cursor.execute("""
+        SELECT COUNT(*) as total 
+        FROM bookings 
+        WHERE user_id=%s OR provider_id=%s
+    """, (user_id, user_id))
+    total_bookings = cursor.fetchone()["total"]
+
+    # Pending
+    cursor.execute("""
+        SELECT COUNT(*) as total 
+        FROM bookings 
+        WHERE (user_id=%s OR provider_id=%s) AND status='pending'
+    """, (user_id, user_id))
+    pending_bookings = cursor.fetchone()["total"]
+
+    # Completed
+    cursor.execute("""
+        SELECT COUNT(*) as total 
+        FROM bookings 
+        WHERE (user_id=%s OR provider_id=%s) AND status='completed'
+    """, (user_id, user_id))
+    completed_bookings = cursor.fetchone()["total"]
+
+    # Total skills 
+    cursor.execute("SELECT COUNT(*) as total FROM skills WHERE provider_id=%s", (user_id,))
+    total_skills = cursor.fetchone()["total"]
+
+    # Total feedback
+    cursor.execute("SELECT COUNT(*) as total FROM feedback WHERE user_id=%s", (user_id,))
+    total_feedbacks = cursor.fetchone()["total"]
+
+    # 🕒 RECENT ACTIVITY
+
+    if session["role"] == "provider":
+        cursor.execute("""
+            SELECT skill_name 
+            FROM skills 
+            WHERE provider_id=%s 
+            ORDER BY skill_id DESC LIMIT 5
+        """, (user_id,))
+        data = cursor.fetchall()
+        recent_data = [f"Added skill: {item['skill_name']}" for item in data]
+
+    else:
+        cursor.execute("""
+            SELECT s.skill_name 
+            FROM bookings b
+            JOIN skills s ON b.skill_id = s.skill_id
+            WHERE b.user_id=%s 
+            ORDER BY b.booking_id DESC LIMIT 5
+        """, (user_id,))
+        data = cursor.fetchall()
+        recent_data = [f"Booked: {item['skill_name']}" for item in data]
+
+    # FINAL RENDER
+
     return render_template("dashboard.html",
-                           user_status=user["status"])
-
-
+                           user_status=user["status"],
+                           total_skills=total_skills,
+                           total_feedbacks=total_feedbacks,
+                           total_bookings=total_bookings,
+                           pending_bookings=pending_bookings,
+                           completed_bookings=completed_bookings,
+                           recent_data=recent_data)
 
 # ✅ Logout
 @app.route("/logout")

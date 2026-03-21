@@ -1,26 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{% block title %}{% endblock %}</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+<title>{% block title %}Dashboard{% endblock %}</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+
 </head>
 
 <body data-theme="light">
 
-<button id="themeToggle" class="btn btn-warning"
-        style="position:fixed; top:20px; right:20px;">
-    Toggle Theme
-</button>
+<!-- SIDEBAR -->
+<div class="sidebar">
 
-<div class="member-wrapper">
-    {% block content %}{% endblock %}
+    <h2 class="logo">⚡ SkillX</h2>
+
+    <ul>
+        <li><a href="/dashboard">🏠 Dashboard</a></li>
+
+        {% if session['role'] == 'provider' %}
+            <li><a href="/add-skill">➕ Add Skill</a></li>
+            <li><a href="/my-skills">📋 My Skills</a></li>
+            <li><a href="/provider-bookings">📦 My Bookings</a></li>
+        {% else %}
+            <li><a href="/all-skills">🔎 Browse Services</a></li>
+            <li><a href="/my-bookings">📦 My Bookings</a></li>
+            <li><a href="/my-feedbacks">⭐ My Feedbacks</a></li>
+        {% endif %}
+
+        <li><a href="/change-password">🔐 Change Password</a></li>
+        <li><a href="/logout" class="logout">🚪 Logout</a></li>
+    </ul>
+
 </div>
 
-<button id="themeToggle" class="btn btn-warning" style="position:fixed;top:20px;right:20px;">Toggle Theme</button>
-<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<!-- MAIN -->
+<div class="main-content">
 
+    <!-- TOPBAR -->
+    <div class="topbar">
+
+        <div class="top-left">
+            <h3>Welcome {{ session['user_name'] }}</h3>
+        </div>
+
+        <div class="top-center">
+            <span class="badge role">Role: {{ session.role | title }}</span>
+
+            {% if user_status == "blocked" %}
+                <span class="badge blocked">Blocked</span>
+            {% else %} <br><br>
+                <span class="badge active-status">Active</span>
+            {% endif %}
+        </div>
+
+        <div class="top-right">
+            <button id="themeToggle" class="btn btn-warning">
+                Toggle Theme
+            </button>
+        </div>
+
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+        {% block content %}{% endblock %}
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 
 </body>
 </html>

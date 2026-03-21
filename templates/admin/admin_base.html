@@ -4,10 +4,14 @@
     <title>{% block title %}Admin Panel{% endblock %}</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
 
     <!-- CORE DESIGN SYSTEM -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 </head>
 
 <body data-theme="light">
@@ -34,15 +38,15 @@
 
     <a href="{{ url_for('admin_skills') }}" 
     class="{% if request.endpoint == 'admin_skills' %}active-link{% endif %}">
-    📚 Skills</a>
+    📚 All Skills</a>
 
     <a href="{{ url_for('admin_bookings') }}" 
     class="{% if request.endpoint == 'admin_bookings' %}active-link{% endif %}">
-    📅 Bookings</a>
+    📅 All Bookings</a>
 
     <a href="{{ url_for('admin_reviews') }}" 
     class="{% if request.endpoint == 'admin_reviews' %}active-link{% endif %}">
-    ⭐ Reviews</a>
+    ⭐ All Reviews</a>
 
     <a href="{{ url_for('admin_change_password') }}" 
     class="{% if request.endpoint == 'admin_change_password' %}active-link{% endif %}">

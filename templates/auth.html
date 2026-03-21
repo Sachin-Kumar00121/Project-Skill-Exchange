@@ -12,7 +12,7 @@
 
 <body>
 
-<div class="auth-wrapper">
+<div class="auth-wrapper {% if show_signup %}toggled{% endif %}">
 
     <div class="background-shape"></div>
     <div class="secondary-shape"></div>
@@ -21,9 +21,9 @@
     <div class="credentials-panel signin">
         <h2 class="slide-element">Login</h2>
 
-        {% if error %}
-        <p style="color:red; text-align:center;">{{ error }}</p>
-        {% endif %}
+          {% if error and not show_signup %}
+          <p  class="slide-element error-msg">{{ error }}</p>
+          {% endif %}
 
         <form method="POST" action="/login">
 
@@ -63,8 +63,8 @@
     <div class="credentials-panel signup">
         <h2 class="slide-element">Register</h2>
 
-        {% if error %}
-        <p style="color:red; text-align:center;">{{ error }}</p>
+        {% if error and show_signup %}
+        <p  class="slide-element error-msg">{{ error }}</p>
         {% endif %}
 
         <form method="POST" action="/register" id="signupForm">
@@ -113,6 +113,14 @@
         <h2 class="slide-element">WELCOME!</h2>
     </div>
 
+</div>
+
+<div id="customAlert" class="custom-alert-overlay">
+    <div class="custom-alert-box">
+        <h3>Action Required</h3>
+        <p>Please select User or Provider to continue.</p>
+        <button onclick="closeAlert()">OK</button>
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/auth.js') }}"></script>

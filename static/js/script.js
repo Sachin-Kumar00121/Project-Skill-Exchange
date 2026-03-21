@@ -90,20 +90,6 @@ startCounters();
 }
 });
 
-
-// DROPDOWN
-const btn = document.querySelector(".register-btn");
-const menu = document.querySelector(".dropdown-menu");
-
-btn.addEventListener("click",(e)=>{
-e.stopPropagation();
-menu.classList.toggle("show");
-});
-
-document.addEventListener("click",()=>{
-menu.classList.remove("show");
-});
-
 // ACTIVE LINK
 document.querySelectorAll(".nav-links a").forEach(link=>{
 if(link.href === window.location.href){
@@ -111,7 +97,7 @@ link.classList.add("active");
 }
 });
 
-// 🔥 SCROLL ANIMATION (FINAL PERFECT)
+//  SCROLL ANIMATION 
 function revealOnScroll(){
 const elements = document.querySelectorAll(".reveal, .fade-left, .zoom-in");
 

@@ -194,6 +194,18 @@
         margin-top: 25px;
     }
 
+    .credentials-panel.signup .field-wrapper {
+        margin-top: 15px;
+    }
+
+    .credentials-panel.signup .role-buttons {
+        margin-top: 28px !important;
+    }   
+
+    .credentials-panel.signup button[type="submit"] {
+        margin-top: 10px !important;
+    }
+
     .field-wrapper input {
         width: 100%;
         height: 100%;
@@ -277,6 +289,11 @@
         font-size: 14px;
         text-align: center;
         margin: 20px 0 10px;
+    }
+
+    .credentials-panel.signup .switch-link {
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
     }
 
     .switch-link a {
@@ -657,4 +674,80 @@ color:#000;
 .forgot-link a:hover {
     text-decoration: underline;
     color: #00b8d4;
+}
+
+/* ================= CUSTOM ALERT MODAL ================= */
+.custom-alert-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none; /* डिफ़ॉल्ट रूप से छुपा रहेगा */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+.custom-alert-overlay.show {
+    display: flex;
+}
+.custom-alert-box {
+    background: #1a1a2e;
+    border: 2px solid #00d4ff;
+    box-shadow: 0 0 20px #00d4ff;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    min-width: 320px;
+    transform: scale(0.8);
+    animation: popUp 0.3s forwards;
+}
+.custom-alert-box h3 {
+    color: #00d4ff;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+.custom-alert-box p {
+    color: #fff;
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+.custom-alert-box button {
+    background: #00d4ff;
+    color: #000;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.custom-alert-box button:hover {
+    background: #00b8d4;
+    box-shadow: 0 0 10px #00d4ff;
+}
+@keyframes popUp { 
+    from { transform: scale(0.8); opacity: 0; } 
+    to { transform: scale(1); opacity: 1; } 
+}
+
+/*  ERROR MESSAGE  */
+.error-msg {
+    color: #ff4d4d;
+    text-align: center;
+    font-size: 14px;     
+    font-weight: 500;
+    line-height: 1.4;
+    margin: 2px 0 10px 0;
+}
+
+/*  REMOVE DEFAULT */
+
+input::-ms-reveal,
+input::-ms-clear,
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
 }

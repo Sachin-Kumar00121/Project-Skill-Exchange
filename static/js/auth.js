@@ -7,6 +7,8 @@ if(registerTrigger){
     registerTrigger.addEventListener('click', (e) => {
         e.preventDefault();
         authWrapper.classList.add('toggled');
+       
+        document.querySelectorAll('.error-msg').forEach(msg => msg.style.display = 'none');
     });
 }
 
@@ -14,6 +16,8 @@ if(loginTrigger){
     loginTrigger.addEventListener('click', (e) => {
         e.preventDefault();
         authWrapper.classList.remove('toggled');
+        
+        document.querySelectorAll('.error-msg').forEach(msg => msg.style.display = 'none');
     });
 }
 
@@ -69,9 +73,14 @@ if(form){
         let role = document.getElementById("roleInput").value;
         if(!role){
             e.preventDefault();
-            alert("Please select User or Provider");
+           
+            document.getElementById('customAlert').classList.add('show');
         }
     });
+}
+
+function closeAlert() {
+    document.getElementById('customAlert').classList.remove('show');
 }
 
 function togglePassword(id, el){
