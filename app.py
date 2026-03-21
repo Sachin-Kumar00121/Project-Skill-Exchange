@@ -555,8 +555,7 @@ def register():
     name = request.form["name"].strip()
     identifier = request.form["identifier"].strip().lower()
     password = request.form["password"]
-   
-
+    
     # ✅ Strong password validation
     pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$'
     if not re.match(pattern, password):
