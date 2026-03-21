@@ -560,12 +560,7 @@ def register():
     name = request.form["name"].strip()
     identifier = request.form["identifier"].strip().lower()
     password = request.form["password"]
-    confirm_password = request.form["confirm_password"]
-
-    # ✅ Confirm password check
-    if password != confirm_password:
-        return render_template("auth.html", error="Password and Confirm Password do not match")
-
+    
     # ✅ Strong password validation
     pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$'
     if not re.match(pattern, password):
