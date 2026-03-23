@@ -2,7 +2,7 @@ const authWrapper = document.querySelector('.auth-wrapper');
 const loginTrigger = document.querySelector('.login-trigger');
 const registerTrigger = document.querySelector('.register-trigger');
 
-// Toggle
+// Toggle login & sign up page
 if(registerTrigger){
     registerTrigger.addEventListener('click', (e) => {
         e.preventDefault();
@@ -82,6 +82,8 @@ if(form){
 function closeAlert() {
     document.getElementById('customAlert').classList.remove('show');
 }
+
+// togle password
 
 function togglePassword(id, el){
     let input = document.getElementById(id);

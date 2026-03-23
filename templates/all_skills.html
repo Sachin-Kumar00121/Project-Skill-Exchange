@@ -1,160 +1,159 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>All Skills</title>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</head>
-<body>
-
-<div style="display:flex; justify-content:space-between; align-items:center;">
-
-    <h2>All Skills</h2>
-
-    <form method="GET" action="/all-skills" style="display:flex; gap:8px;">
-        <input type="text"
-               name="search"
-               placeholder="Search skill or provider..."
-               value="{{ request.args.get('search','') }}"
-               style="padding:6px 10px; border-radius:6px; border:1px solid #ccc;">
-
-        <button type="submit"
-                style="padding:6px 12px;
-                       background:#2563eb;
-                       color:white;
-                       border:none;
-                       border-radius:6px;
-                       cursor:pointer;">
-            🔍 Search
-        </button>
-    </form>
-
-</div>
-
-<!-- Category Filter -->
-<a href="/all-skills">All</a> |
-<a href="/all-skills?category=Electrical">Electrical</a> |
-<a href="/all-skills?category=Teaching">Teaching</a> |
-<a href="/all-skills?category=Repair">Repair</a> |
-<a href="/all-skills?category=Electronics">Electronics</a>
-
-<hr>
-
-{% for s in skills %}
-
-<div  class="skill-card" style="border:1px solid #ccc; padding:15px; margin-bottom:15px;">
-
-    <!-- Photo -->
-    {% if s.photo %}
-        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}" 
-             width="150" height="120">
-        <br><br>
-    {% endif %}
-
-    <!-- Skill Info -->
-
-    <div class="rating-badge">
-    <!-- ⭐ Star Display -->
-        {% for i in range(1,6) %}
-            {% if i <= (s.avg_rating | int) %}
-                <span style="color:gold;">★</span>
-            {% else %}
-                <span style="color:gray;">★</span>
-            {% endif %}
-        {% endfor %}
-
-        ({{ s.avg_rating | round(1) if s.avg_rating else 0 }})
-
-        <!-- 🏆 Top Rated Badge -->
-        {% if s.avg_rating and s.avg_rating >= 4.5 %}
-            <span style="background:gold;color:black;
-                         padding:3px 6px;border-radius:5px;
-                         font-size:11px;margin-left:6px;">
-                🏆 Top Rated
-            </span>
-        {% endif %}
-
-     </div>
-
-    <b>{{ s.skill_name }}</b> ({{ s.category }}) <br>
-    Provider: {{ s.provider_name }} <br>
-    Experience: {{ s.experience }} years <br>
-    Base Price: ₹{{ s.price }} ({{ s.unit }}) <br><br>
-    {{ s.description }} <br><br>
-    
-    {% if session['role'] == 'user' %}
-        <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')">
-         Book Now
-        </button>
-    {% endif %}
-
-</div>
-
-{% endfor %}
-
-
-<!-- ================= POPUP BOOKING FORM ================= -->
-
-<div id="bookingPopup" 
-     style="display:none;
-     position:fixed;
-     top:50%;
-     left:50%;
-     transform:translate(-50%, -50%);
-     background:white;
-     padding:25px;
-     border-radius:10px;
-     box-shadow:0 0 15px rgba(0,0,0,0.3);
-     width:350px;
-     z-index:1000;">
-
-    <h3>Book Service</h3>
-
-    <form method="POST" action="/book">
-
-        <input type="hidden" name="skill_id" id="popupSkillId">
-
-        Offered Price:<br>
-        <input type="number" name="offered_price" id="popupPrice" required>
-        <br><br>
-
-        Unit:<br>
-        <input type="text" name="unit" id="popupUnit" required>
-        <br><br>
-
-        Date:<br>
-        <input type="date" name="service_date" required>
-        <br><br>
-
-       <label>Time:</label><br>
-
-       <input type="number" name="hour" min="1" max="12" required style="width:60px;">:
-       <input type="number" name="minute" min="0" max="59" required style="width:60px;">
-
-         <select name="ampm" required>
-         <option value="AM">AM</option>
-         <option value="PM">PM</option>
-         </select>
+<!DOCTYPE html>  
+<html>  
+<head>  
+    <title>All Skills</title>  
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>  
+</head>  
+<body>  
+  
+<div style="display:flex; justify-content:space-between; align-items:center;">  
+  
+    <h2>All Skills</h2>  
+  
+    <form method="GET" action="/all-skills" style="display:flex; gap:8px;">  
+        <input type="text"  
+               name="search"  
+               placeholder="Search skill or provider..."  
+               value="{{ request.args.get('search','') }}"  
+               style="padding:6px 10px; border-radius:6px; border:1px solid #ccc;">  
+  
+        <button type="submit"  
+                style="padding:6px 12px;  
+                       background:#2563eb;  
+                       color:white;  
+                       border:none;  
+                       border-radius:6px;  
+                       cursor:pointer;">  
+            🔍 Search  
+        </button>  
+    </form>  
+  
+</div>  
+  
+<!-- Category Filter -->  
+<a href="/all-skills">All</a> |  
+<a href="/all-skills?category=Electrical">Electrical</a> |  
+<a href="/all-skills?category=Teaching">Teaching</a> |  
+<a href="/all-skills?category=Repair">Repair</a> |  
+<a href="/all-skills?category=Electronics">Electronics</a>  
+  
+<hr>  
+  
+{% for s in skills %}  
+  
+<div  class="skill-card" style="border:1px solid #ccc; padding:15px; margin-bottom:15px;">  
+  
+    <!-- Photo -->  
+    {% if s.photo %}  
+        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}"   
+             width="150" height="120">  
+        <br><br>  
+    {% endif %}  
+  
+    <!-- Skill Info -->  
+  
+    <div class="rating-badge">  
+    <!-- ⭐ Star Display -->  
+        {% for i in range(1,6) %}  
+            {% if i <= (s.avg_rating | int) %}  
+                <span style="color:gold;">★</span>  
+            {% else %}  
+                <span style="color:gray;">★</span>  
+            {% endif %}  
+        {% endfor %}  
+  
+        ({{ s.avg_rating | round(1) if s.avg_rating else 0 }})  
+  
+        <!-- 🏆 Top Rated Badge -->  
+        {% if s.avg_rating and s.avg_rating >= 4.5 %}  
+            <span style="background:gold;color:black;  
+                         padding:3px 6px;border-radius:5px;  
+                         font-size:11px;margin-left:6px;">  
+                🏆 Top Rated  
+            </span>  
+        {% endif %}  
+  
+     </div>  
+  
+    <b>{{ s.skill_name }}</b> ({{ s.category }}) <br>  
+    Provider: {{ s.provider_name }} <br>  
+    Experience: {{ s.experience }} years <br>  
+    Base Price: ₹{{ s.price }} ({{ s.unit }}) <br><br>  
+    {{ s.description }} <br><br>  
+      
+    {% if session['role'] == 'user' %}  
+        <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')">  
+         Book Now  
+        </button>  
+    {% endif %}  
+  
+</div>  
+  
+{% endfor %}  
+  
+  
+<!-- ================= POPUP BOOKING FORM ================= -->  
+  
+<div id="bookingPopup"   
+     style="display:none;  
+     position:fixed;  
+     top:50%;  
+     left:50%;  
+     transform:translate(-50%, -50%);  
+     background:white;  
+     padding:25px;  
+     border-radius:10px;  
+     box-shadow:0 0 15px rgba(0,0,0,0.3);  
+     width:350px;  
+     z-index:1000;">  
+  
+    <h3>Book Service</h3>  
+  
+    <form method="POST" action="/book">  
+  
+        <input type="hidden" name="skill_id" id="popupSkillId">  
+  
+        Offered Price:<br>  
+        <input type="number" name="offered_price" id="popupPrice" required>  
+        <br><br>  
+  
+        Unit:<br>  
+        <input type="text" name="unit" id="popupUnit" required>  
+        <br><br>  
+  
+        Date:<br>  
+        <input type="date" name="service_date" required>  
+        <br><br>  
+  
+       <label>Time:</label><br>  
+  
+       <input type="number" name="hour" min="1" max="12" required style="width:60px;">:  
+       <input type="number" name="minute" min="0" max="59" required style="width:60px;">  
+  
+         <select name="ampm" required>  
+         <option value="AM">AM</option>  
+         <option value="PM">PM</option>  
+         </select>  
+           
+        <br><br>  
+        <label>Remark:</label>  
+        <textarea name="remark" rows="3" placeholder="Write any special request..." textarea="Justify"   
+         style="width:100%; padding:8px; border-radius:6px; margin-top:5px;"></textarea>  
+       <button type="submit" >  
+         Send  
+       </button>  
          
-        <br><br>
-        <label>Remark:</label>
-        <textarea name="remark" rows="3" placeholder="Write any special request..." textarea="Justify" 
-         style="width:100%; padding:8px; border-radius:6px; margin-top:5px;"></textarea>
-       <button type="submit" >
-         Send
-       </button>
-       
-       <button type="button" onclick="closePopup()">Cancel</button>
-
-    </form>
-
-</div>
-
-{% if request.args %}
-    <a href="/all-skills">← Back</a>
-{% else %}
-    <a href="/dashboard">← Back</a>
-{% endif %}
-
-</body>
+       <button type="button" onclick="closePopup()">Cancel</button>  
+  
+    </form>  
+  
+</div>  
+  
+{% if request.args %}  
+    <a href="/all-skills">← Back</a>  
+{% else %}  
+    <a href="/dashboard">← Back</a>  
+{% endif %}  
+  
+</body>  
 </html>
-

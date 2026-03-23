@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}All Notifications{% endblock %}
+{% block content %}
+<div class="app-container-mid">
+    
+    <div class="dash-welcome-wrapper" style="margin-top: 10px;">
+        <h1>All Notifications</h1>
+        <p>Your recent activity and alerts.</p>
+    </div>
+
+    <div class="card-glass">
+        <h3 class="dash-section-title">
+            <i class="fa-solid fa-bell"></i> 
+            History
+        </h3>
+
+        <div class="notif-full-list">
+            {% if all_notifications %}
+                {% for n in all_notifications %}
+                    <div class="notif-card-item">
+                        <div class="notif-content-wrapper">
+                            <div class="notif-icon-lg">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <div class="notif-text">
+                                <p>{{ n.message }}</p>
+                                <span>{{ n.created_at.strftime('%d %B, %Y at %I:%M %p') }}</span>
+                            </div>
+                        </div>
+                        
+                        <form action="/delete-notification/{{ n.notify_id }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn-delete-notif" title="Delete Notification">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-box-state">
+                    <i class="fa-solid fa-bell-slash" style="font-size: 40px; margin-bottom: 10px;"></i>
+                    <p>No notifications found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="/dashboard" class="btn-back">
+        <i class="fa-solid fa-arrow-left"></i> <span>Back to Dashboard</span>
+    </a>
+
+</div>
+{% endblock %}

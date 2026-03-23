@@ -1,6 +1,6 @@
-/* =========================
+/* 
    ROOT THEME VARIABLES
-========================= */
+ */
 
 :root {
     --radius: 14px;
@@ -26,9 +26,9 @@
     --warning: #f59e0b;
 }
 
-/* =========================
+/* 
    GLOBAL RESET
-========================= */
+ */
 
 * {
     margin: 0;
@@ -49,9 +49,9 @@ body[data-theme="dark"] {
     color: var(--text-dark);
 }
 
-/* =========================
+/* 
    CARD SYSTEM
-========================= */
+ */
 
 .card {
     background: var(--card-light);
@@ -66,9 +66,9 @@ body[data-theme="dark"] .card {
     box-shadow: 0 8px 25px rgba(0,0,0,0.3);
 }
 
-/* =========================
+/* 
    BUTTON SYSTEM
-========================= */
+ */
 
 .btn {
     padding: 9px 18px;
@@ -90,9 +90,9 @@ body[data-theme="dark"] .card {
     opacity: 0.9;
 }
 
-/* =========================
+/* 
    TABLE SYSTEM
-========================= */
+*/
 
 .table {
     width: 100%;
@@ -119,9 +119,9 @@ body[data-theme="dark"] .table td {
     border-top: 1px solid var(--border-dark);
 }
 
-/* =========================
+/* 
    INPUT SYSTEM
-========================= */
+ */
 
 .input-group {
     margin-bottom: 16px;
@@ -149,9 +149,9 @@ body[data-theme="dark"] .input-group select {
     outline: none;
 }
 
-
 /* NAVBAR  & All HOME PAGE  */
-/* ================== MAIN BACKGROUND ================== */
+
+/*  MAIN BACKGROUND */
 .home-page{
 margin:0;
 font-family:'Poppins',sans-serif;
@@ -167,7 +167,7 @@ color:white;
 100%{background-position:0%}
 }
 
-/* ================== NAVBAR ================== */
+/* NAVBAR */
 .navbar{
 display:flex;
 justify-content:space-between;
@@ -221,32 +221,13 @@ transition:0.3s;
 transform:scale(1.08);
 }
 
-/* ================== DROPDOWN ================== */
-.dropdown{position:relative;}
-
-.dropdown-menu{
-display:none;
-position:absolute;
-top:45px;
-background:#111827;
-padding:10px;
-border-radius:10px;
-min-width:150px;
-z-index:999;
-flex-direction:column;
-}
-
-.dropdown-menu.show{
-display:flex;
-}
-
-/* ================== HERO ================== */
+/*  HERO */
 .hero{
 text-align:center;
 padding:120px 20px;
 }
 
-/* ================== SEARCH ================== */
+/*  SEARCH */
 .search-box{
 margin-top:20px;
 position:relative;
@@ -268,7 +249,7 @@ border-radius:8px;
 cursor:pointer;
 }
 
-/* ================== SUGGESTIONS ================== */
+/*  SUGGESTIONS */
 #suggestions{
 position:absolute;
 top:50px;
@@ -292,7 +273,7 @@ background:#22c55e;
 color:white;
 }
 
-/* ================== GRID ================== */
+/* GRID  */
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -300,7 +281,7 @@ gap:20px;
 padding:40px;
 }
 
-/* ================== CARD ================== */
+/*  CARD */
 .card{
 background:rgba(255,255,255,0.1);
 padding:20px;
@@ -309,7 +290,7 @@ text-align:center;
 transition:0.4s;
 }
 
-/* ================== SERVICE CARD ================== */
+/*  SERVICE CARD */
 .skill-card,
 .service-card{
 background:linear-gradient(135deg,#111827,#1f2937);
@@ -340,7 +321,7 @@ transition:0.6s;
 top:100%;
 }
 
-/* 🔥 HOVER FIX (IMPORTANT) */
+/* HOVER  */
 .skill-card:hover,
 .service-card:hover,
 .card:hover{
@@ -350,7 +331,7 @@ box-shadow: 0 20px 40px rgba(0,0,0,0.6),
 z-index:10;
 }
 
-/* ================== BUTTON ================== */
+/* BUTTON  */
 button{
 background:linear-gradient(45deg,#22c55e,#4ade80);
 color:white;
@@ -386,7 +367,7 @@ button:active{
 transform:scale(0.95);
 }
 
-/* ================== BADGES ================== */
+/*  BADGES  */
 .badge{
 position:absolute;
 top:10px;
@@ -414,7 +395,7 @@ font-size:12px;
 100%{transform:scale(1);}
 }
 
-/* ================== STEPS ================== */
+/* STEPS  */
 .steps{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -422,7 +403,7 @@ gap:20px;
 padding:40px;
 }
 
-/* ================== FOOTER ================== */
+/*  FOOTER  */
 footer{
 background:#000;
 padding:40px;
@@ -445,7 +426,7 @@ footer a:hover{
 color:white;
 }
 
-/* ================== SKELETON LOADING ================== */
+/* SKELETON LOADING  */
 .skeleton{
 background:linear-gradient(90deg,#1f2937,#374151,#1f2937);
 background-size:200% 100%;
@@ -459,7 +440,7 @@ height:150px;
 100%{background-position:-200% 0;}
 }
 
-/* ================== ANIMATION ================== */
+/*  ANIMATION */
 .reveal,
 .fade-left,
 .zoom-in{
@@ -487,7 +468,7 @@ opacity:1;
 transform:scale(1);
 }
 
-/* ================== RESPONSIVE ================== */
+/*  RESPONSIVE  */
 @media(max-width:768px){
 
 .nav-links{

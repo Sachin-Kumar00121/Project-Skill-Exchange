@@ -1,5 +1,6 @@
 import code
 import os
+from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 load_dotenv()
 from flask import jsonify, make_response
@@ -12,7 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "skill_exchange_secret"
 
-# ✅ MySQL Connection
+#  MySQL Connection
 db = mysql.connector.connect(
     host=os.getenv("DB_HOST", ""),
     user=os.getenv("DB_USER", ""),
@@ -208,7 +209,7 @@ def admin_delete_user(user_id):
     return redirect("/admin-users")
 
 
-# Admin Manage Providers Route with Search
+# Admin Manage Providers Route 
 @app.route("/admin-providers")
 def admin_providers():
 
@@ -438,7 +439,7 @@ def admin_reviews():
         total_pages=total_pages
     )
 
-# 🔍 SEARCH SUGGEST
+# SEARCH SUGGEST
 @app.route("/search-suggest")
 def search_suggest():
     q = request.args.get("q")
@@ -458,7 +459,7 @@ def search_suggest():
 @app.route("/")
 def home():
 
-    # ✅ STATS
+    # STATS
     cursor.execute("SELECT COUNT(*) as total FROM users WHERE role='user'")
     total_users = cursor.fetchone()['total']
 
@@ -468,7 +469,7 @@ def home():
     cursor.execute("SELECT COUNT(*) as total FROM bookings")
     total_bookings = cursor.fetchone()['total']
 
-    # ✅ TOP CATEGORIES
+    #  TOP CATEGORIES
     cursor.execute("""
     SELECT category, COUNT(*) as total
     FROM skills
@@ -478,7 +479,7 @@ def home():
     """)
     top_categories = cursor.fetchall()
 
-    # ✅ POPULAR SERVICES 
+    #  POPULAR SERVICES 
     cursor.execute("""
     SELECT s.*, u.name as provider_name,
 
@@ -512,7 +513,7 @@ def home():
     """)
     trending_skills = cursor.fetchall()
 
-    # 📂 CATEGORY BASED
+    # CATEGORY BASED
     cursor.execute("SELECT DISTINCT category FROM skills LIMIT 3")
     categories = cursor.fetchall()
 
@@ -540,7 +541,7 @@ def home():
         category_skills=category_skills
     )
 
-# ✅ SINGLE REGISTER ROUTE
+#  SINGLE REGISTER ROUTE
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
@@ -556,13 +557,13 @@ def register():
     identifier = request.form["identifier"].strip().lower()
     password = request.form["password"]
     
-    # ✅ Strong password validation
+    #  Strong password validation
     pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$'
     if not re.match(pattern, password):
         return render_template("auth.html",
                                error="Password must be at least 8 characters long and include uppercase, lowercase, number and special character.", show_signup=True)
 
-    # ✅ Detect email / phone
+    #  Detect email / phone
     is_email = "@" in identifier
     is_phone = identifier.isdigit() and len(identifier) == 10
 
@@ -570,7 +571,7 @@ def register():
         return render_template("auth.html",
                                error="Enter valid Email or 10-digit Phone", show_signup=True)
 
-    # ✅ Duplicate check
+    # Duplicate check
     if is_email:
         cursor.execute("SELECT user_id FROM users WHERE email=%s", (identifier,))
     else:
@@ -581,7 +582,7 @@ def register():
 
     hashed_password = generate_password_hash(password)
 
-    # ✅ Insert user
+    #  Insert user
     if is_email:
         cursor.execute(
             "INSERT INTO users (name, email, phone, password, id_type, role) VALUES (%s,%s,%s,%s,%s,%s)",
@@ -648,7 +649,7 @@ def change_password():
         new_password = request.form["new_password"]
         confirm_password = request.form["confirm_password"]
 
-        # 🔹 CASE 1: NOT LOGGED IN 
+        #  CASE 1: NOT LOGGED IN 
       
         if not user_id:
             identifier = request.form.get("identifier")
@@ -675,7 +676,7 @@ def change_password():
             return render_template("change_password.html",
                                    success="Password reset successful")
 
-        # 🔹 CASE 2: LOGGED IN
+        #  CASE 2: LOGGED IN
 
         old_password = request.form["old_password"]
 
@@ -707,13 +708,13 @@ def change_password():
 @app.route("/dashboard")
 def dashboard():
 
+    # 1. Login Check
     if "user_id" not in session:
         return redirect("/login")
 
     user_id = session["user_id"]
   
-    # USER STATUS
-    
+    # 2. USER STATUS CHECK
     cursor.execute("SELECT status, block_reason FROM users WHERE user_id=%s", (user_id,))
     user = cursor.fetchone()
 
@@ -722,8 +723,8 @@ def dashboard():
         return render_template("auth.html",
                                error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
 
-    # 📊 STATS
-
+    # 3. STATS CALCULATION
+    
     # Total bookings
     cursor.execute("""
         SELECT COUNT(*) as total 
@@ -756,31 +757,65 @@ def dashboard():
     cursor.execute("SELECT COUNT(*) as total FROM feedback WHERE user_id=%s", (user_id,))
     total_feedbacks = cursor.fetchone()["total"]
 
-    # 🕒 RECENT ACTIVITY
 
-    if session["role"] == "provider":
-        cursor.execute("""
-            SELECT skill_name 
-            FROM skills 
-            WHERE provider_id=%s 
-            ORDER BY skill_id DESC LIMIT 5
-        """, (user_id,))
-        data = cursor.fetchall()
-        recent_data = [f"Added skill: {item['skill_name']}" for item in data]
+    # 4.  SMART RECENT ACTIVITY 
+    raw_activities = []
 
-    else:
-        cursor.execute("""
-            SELECT s.skill_name 
-            FROM bookings b
-            JOIN skills s ON b.skill_id = s.skill_id
-            WHERE b.user_id=%s 
-            ORDER BY b.booking_id DESC LIMIT 5
-        """, (user_id,))
-        data = cursor.fetchall()
-        recent_data = [f"Booked: {item['skill_name']}" for item in data]
+    # Fetch Latest Skills 
+    unique_skills = set()
+    cursor.execute("""
+        SELECT skill_name, skill_id as item_id 
+        FROM skills 
+        WHERE provider_id=%s 
+        ORDER BY skill_id DESC LIMIT 5
+    """, (user_id,))
+    for row in cursor.fetchall():
+        if row['skill_name'] not in unique_skills:
+            unique_skills.add(row['skill_name'])
+            raw_activities.append({
+                "msg": f"Added skill: {row['skill_name']}",
+                "id": row['item_id']
+            })
 
-    # FINAL RENDER
+    # Fetch Latest Bookings 
+    unique_bookings = set()
+    cursor.execute("""
+        SELECT s.skill_name, b.booking_id as item_id 
+        FROM bookings b
+        JOIN skills s ON b.skill_id = s.skill_id
+        WHERE b.user_id=%s OR b.provider_id=%s
+        ORDER BY b.booking_id DESC LIMIT 5
+    """, (user_id, user_id))
+    for row in cursor.fetchall():
+        if row['skill_name'] not in unique_bookings:
+            unique_bookings.add(row['skill_name'])
+            raw_activities.append({
+                "msg": f"Booked: {row['skill_name']}", 
+                "id": row['item_id']
+            })
 
+    # Fetch Latest Feedbacks
+    cursor.execute("""
+        SELECT u.name as receiver_name, f.feedback_id as item_id 
+        FROM feedback f
+        JOIN users u ON f.provider_id = u.user_id
+        WHERE f.user_id=%s 
+        ORDER BY f.feedback_id DESC LIMIT 5
+    """, (user_id,))
+
+    for row in cursor.fetchall():
+        raw_activities.append({
+            "msg": f"Given feedback to: {row['receiver_name']}",
+            "id": row['item_id']
+        })
+
+    # Sort mixed activities by ID 
+    raw_activities.sort(key=lambda x: x["id"], reverse=True)
+    
+    # Extract only the messages and limit strictly to top 5
+    recent_data = [item["msg"] for item in raw_activities[:5]]
+
+    # 5. FINAL RENDER
     return render_template("dashboard.html",
                            user_status=user["status"],
                            total_skills=total_skills,
@@ -935,7 +970,7 @@ def all_skills():
         conditions.append("s.category=%s")
         values.append(category)
 
-    # 🔎 Search filter 
+    # Search filter 
     if search:
         conditions.append("(s.skill_name LIKE %s OR u.name LIKE %s)")
         values.append(f"%{search}%")
@@ -972,58 +1007,54 @@ def all_skills():
 # Booking Route 
 @app.route("/book", methods=["POST"])
 def book():
-
     if "user_id" not in session or session.get("role") != "user":
         return redirect("/login")
 
     user_id = session["user_id"]
-
     skill_id = request.form["skill_id"]
     offered_price = request.form["offered_price"]
     unit = request.form["unit"]
     service_date = request.form["service_date"]
-
     hour = request.form.get("hour")
     minute = request.form.get("minute")
     ampm = request.form.get("ampm")
 
-    # ✅ Convert to 24hr format for DB
+    #  Convert to 24hr format for DB
     time_string = f"{hour}:{minute} {ampm}"
     time_obj = datetime.strptime(time_string, "%I:%M %p")
     service_time = time_obj.strftime("%H:%M:%S")  
 
-    # ✅ Duplicate Check
+    #  Duplicate Check
     cursor.execute("""
         SELECT * FROM bookings
-        WHERE skill_id=%s 
-        AND user_id=%s
-        AND service_date=%s
-        AND status IN ('pending','accepted')
+        WHERE skill_id=%s AND user_id=%s AND service_date=%s AND status IN ('pending','accepted')
     """, (skill_id, user_id, service_date))
 
     existing = cursor.fetchone()
-    
     if existing:
         return redirect("/all-skills")
 
-    # Get provider id
-    cursor.execute("SELECT provider_id FROM skills WHERE skill_id=%s", (skill_id,))
+    # Get provider id and skill name 
+    cursor.execute("SELECT provider_id, skill_name FROM skills WHERE skill_id=%s", (skill_id,))
     skill = cursor.fetchone()
 
     if not skill:
         return redirect("/all-skills")
 
     provider_id = skill["provider_id"]
+    skill_name = skill["skill_name"]
 
     # Insert new booking
     cursor.execute("""
-        INSERT INTO bookings
-        (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, remark)
+        INSERT INTO bookings (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, remark)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
     """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, request.form.get("remark")))
 
-    db.commit()
+    #  Send Notification to Provider
+    notif_msg = f"New booking request for '{skill_name}' from {session['user_name']}."
+    cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (provider_id, notif_msg))
 
+    db.commit()
     session["hide_skill"] = skill_id
 
     return redirect(url_for("all_skills"))
@@ -1032,22 +1063,32 @@ def book():
 # Cancel Booking Route
 @app.route("/cancel-booking/<int:booking_id>", methods=["POST"])
 def cancel_booking(booking_id):
-
     if "user_id" not in session:
         return redirect("/login")
 
+    user_id = session["user_id"]
+
+    #  Get details for notification before updating
     cursor.execute("""
-        UPDATE bookings 
-        SET status='cancelled'
-        WHERE booking_id=%s 
-        AND user_id=%s 
-        AND status IN ('pending','accepted')
-    """, (booking_id, session["user_id"]))
+        SELECT b.provider_id, s.skill_name 
+        FROM bookings b JOIN skills s ON b.skill_id = s.skill_id 
+        WHERE b.booking_id=%s AND b.user_id=%s
+    """, (booking_id, user_id))
+    b_data = cursor.fetchone()
+
+    # Cancel the booking
+    cursor.execute("""
+        UPDATE bookings SET status='cancelled'
+        WHERE booking_id=%s AND user_id=%s AND status IN ('pending','accepted')
+    """, (booking_id, user_id))
+
+    #  Send Notification to Provider
+    if b_data:
+        notif_msg = f"Booking for '{b_data['skill_name']}' was cancelled by the user."
+        cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (b_data['provider_id'], notif_msg))
 
     db.commit()
-
     return redirect("/my-bookings")
-
 
 # View My Bookings  for user route
 @app.route("/my-bookings")
@@ -1074,7 +1115,7 @@ def my_bookings():
     # Date & Time Convert
     for b in bookings:
 
-        # -------- DATE --------
+        #  DATE 
         if b.get("service_date"):
             if isinstance(b["service_date"], date):
                 b["display_date"] = b["service_date"].strftime("%d %b %Y")
@@ -1082,7 +1123,7 @@ def my_bookings():
                 dt_obj = datetime.strptime(str(b["service_date"]), "%Y-%m-%d")
                 b["display_date"] = dt_obj.strftime("%d %b %Y")
 
-        # -------- TIME --------
+        #  TIME 
         if b.get("service_time"):
             if isinstance(b["service_time"], time):
                 b["display_time"] = b["service_time"].strftime("%I:%M %p")
@@ -1092,7 +1133,7 @@ def my_bookings():
         else:
             b["display_time"] = "Not Set"
 
-        # -------- FEEDBACK CHECK --------
+        # FEEDBACK CHECK 
         cursor.execute(
             "SELECT feedback_id FROM feedback WHERE booking_id=%s",
             (b["booking_id"],)
@@ -1123,7 +1164,7 @@ def provider_bookings():
 
     bookings = cursor.fetchall()
 
-    # ✅ Date & Time Convert (FIXED INDENTATION)
+    #  Date & Time Convert 
     for b in bookings:
 
         # Date Convert
@@ -1142,7 +1183,7 @@ def provider_bookings():
                 time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
                 b["display_time"] = time_obj.strftime("%I:%M %p")
 
-    # ⭐ Average Rating
+    #  Average Rating
     cursor.execute("""
         SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews
         FROM feedback
@@ -1150,7 +1191,7 @@ def provider_bookings():
     """, (provider_id,))
     rating_data = cursor.fetchone()
 
-    # ⭐ All Reviews
+    #  All Reviews
     cursor.execute("""
         SELECT f.*, 
                u.name as user_name,
@@ -1167,7 +1208,7 @@ def provider_bookings():
 
     reviews = cursor.fetchall()
 
-    # ✅ Reviews Date & Time Convert (FIXED)
+    # Reviews Date & Time Convert 
     for r in reviews:
 
         # Booking Date
@@ -1205,68 +1246,74 @@ def provider_bookings():
 # Update Booking Status (Accept/Reject) for Providers route
 @app.route("/update-booking/<int:booking_id>/<status>", methods=["POST"])
 def update_booking(booking_id, status):
-
     if "user_id" not in session:
         return redirect("/login")
-
 
     if status not in ["accepted", "rejected", "completed"]:
         return redirect("/provider-bookings")
 
+    # Update status
     cursor.execute("""
-        UPDATE bookings
-        SET status=%s
-        WHERE booking_id=%s AND provider_id=%s
+        UPDATE bookings SET status=%s WHERE booking_id=%s AND provider_id=%s
     """, (status, booking_id, session["user_id"]))
 
-    db.commit()
+    # Get details and Send Notification to User
+    cursor.execute("""
+        SELECT b.user_id, s.skill_name 
+        FROM bookings b JOIN skills s ON b.skill_id = s.skill_id 
+        WHERE b.booking_id=%s
+    """, (booking_id,))
+    b_data = cursor.fetchone()
 
+    if b_data:
+        notif_msg = f"Your booking for '{b_data['skill_name']}' has been {status}."
+        cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (b_data['user_id'], notif_msg))
+
+    db.commit()
     return redirect("/provider-bookings")
 
 # Mark Completed Route for Providers
 @app.route("/mark-completed/<int:booking_id>", methods=["POST"])
 def mark_completed(booking_id):
-
     if "user_id" not in session:
         return redirect("/login")
 
     cursor.execute("""
-        UPDATE bookings 
-        SET status='completed'
-        WHERE booking_id=%s AND provider_id=%s
+        UPDATE bookings SET status='completed' WHERE booking_id=%s AND provider_id=%s
     """, (booking_id, session["user_id"]))
 
-    db.commit()
+    #  Send Notification to User
+    cursor.execute("""
+        SELECT b.user_id, s.skill_name 
+        FROM bookings b JOIN skills s ON b.skill_id = s.skill_id 
+        WHERE b.booking_id=%s
+    """, (booking_id,))
+    b_data = cursor.fetchone()
 
+    if b_data:
+        notif_msg = f"Your booking for '{b_data['skill_name']}' is marked as completed. Please leave a feedback!"
+        cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (b_data['user_id'], notif_msg))
+
+    db.commit()
     return redirect("/provider-bookings")
 
 # Give Feedback Route
 @app.route("/give-feedback/<int:booking_id>", methods=["GET", "POST"])
 def give_feedback(booking_id):
-
     if "user_id" not in session:
         return redirect("/login")
 
     user_id = session["user_id"]
 
-    # booking verify (completed only)
     cursor.execute("""
-        SELECT * FROM bookings
-        WHERE booking_id=%s 
-        AND user_id=%s 
-        AND status='completed'
+        SELECT * FROM bookings WHERE booking_id=%s AND user_id=%s AND status='completed'
     """, (booking_id, user_id))
-
     booking = cursor.fetchone()
 
     if not booking:
         return redirect("/my-bookings")
 
-    # Already submitted check
-    cursor.execute(
-        "SELECT feedback_id FROM feedback WHERE booking_id=%s",
-        (booking_id,)
-    )
+    cursor.execute("SELECT feedback_id FROM feedback WHERE booking_id=%s", (booking_id,))
     existing = cursor.fetchone()
 
     if existing:
@@ -1276,28 +1323,25 @@ def give_feedback(booking_id):
         rating = request.form["rating"]
         comment = request.form["comment"]
 
+        # Insert Feedback
         cursor.execute("""
-            INSERT INTO feedback
-            (booking_id, skill_id, user_id, provider_id, rating, comment)
+            INSERT INTO feedback (booking_id, skill_id, user_id, provider_id, rating, comment)
             VALUES (%s,%s,%s,%s,%s,%s)
-        """, (
-            booking_id,
-            booking["skill_id"],
-            user_id,
-            booking["provider_id"],
-            rating,
-            comment
-        ))
+        """, (booking_id, booking["skill_id"], user_id, booking["provider_id"], rating, comment))
 
         # mark feedback given
         cursor.execute("""
-            UPDATE bookings
-            SET feedback_given = 1
-            WHERE booking_id=%s
+            UPDATE bookings SET feedback_given = 1 WHERE booking_id=%s
         """, (booking_id,))
 
-        db.commit()
+        #  Send Notification to Provider
+        cursor.execute("SELECT skill_name FROM skills WHERE skill_id=%s", (booking["skill_id"],))
+        skill = cursor.fetchone()
+        if skill:
+            notif_msg = f"You received a {rating}-star feedback for '{skill['skill_name']}'."
+            cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (booking["provider_id"], notif_msg))
 
+        db.commit()
         return redirect("/my-bookings")
 
     return render_template("give_feedback.html", booking=booking)
@@ -1401,7 +1445,148 @@ def edit_feedback(feedback_id):
 
     return render_template("edit_feedback.html", feedback=feedback)
 
+
+# File Upload Configuration 
+UPLOAD_FOLDER = 'static/uploads/profile_pics'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# 🚀 APP FEATURES: NOTIFICATIONS, PROFILE & PUBLIC VIEW
+
+# 1. Global Context Processor 
+@app.context_processor
+def inject_global_data():
+    if 'user_id' in session:
+        # Get notifications
+        cursor.execute("SELECT * FROM notifications WHERE user_id=%s ORDER BY created_at DESC LIMIT 5", (session['user_id'],))
+        notifs = cursor.fetchall()
+        
+        # Get unread count
+        cursor.execute("SELECT COUNT(*) as unread FROM notifications WHERE user_id=%s AND is_read=0", (session['user_id'],))
+        unread_count = cursor.fetchone()['unread']
+        
+        # Ensure profile pic is in session
+        cursor.execute("SELECT profile_pic FROM users WHERE user_id=%s", (session['user_id'],))
+        user_data = cursor.fetchone()
+        if user_data:
+            session['profile_pic'] = user_data.get('profile_pic')
+            
+        return dict(notifications=notifs, unread_count=unread_count)
+    return dict(notifications=[], unread_count=0)
+
+# 2. Notification Routes
+
+@app.route("/read-notification/<int:notify_id>")
+def read_notification(notify_id):
+    if "user_id" in session:
+        cursor.execute("UPDATE notifications SET is_read=1 WHERE notify_id=%s AND user_id=%s", (notify_id, session["user_id"]))
+        db.commit()
+    return redirect(request.referrer or "/dashboard")
+
+@app.route("/notifications")
+def notifications_page():
+    if "user_id" not in session:
+        return redirect("/login")
+    
+    # Fetch strictly LIMIT 10 as requested
+    cursor.execute("SELECT * FROM notifications WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (session['user_id'],))
+    all_notifs = cursor.fetchall()
+    
+    cursor.execute("UPDATE notifications SET is_read=1 WHERE user_id=%s", (session["user_id"],))
+    db.commit()
+    
+    return render_template("notifications.html", all_notifications=all_notifs)
+
+#  Delete Notification
+@app.route("/delete-notification/<int:notify_id>", methods=["POST"])
+def delete_notification(notify_id):
+    if "user_id" not in session:
+        return redirect("/login")
+    
+    cursor.execute("DELETE FROM notifications WHERE notify_id=%s AND user_id=%s", (notify_id, session["user_id"]))
+    db.commit()
+    
+    return redirect("/notifications")
+
+# 3. My Profile Route
+@app.route("/profile", methods=["GET", "POST"])
+def profile():
+    if "user_id" not in session:
+        return redirect("/login")
+    
+    cursor.execute("SELECT * FROM users WHERE user_id=%s", (session["user_id"],))
+    user_info = cursor.fetchone()
+    
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        bio = request.form.get("bio")
+        profile_pic = user_info['profile_pic']
+
+        file = request.files.get('profile_pic')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(f"user_{session['user_id']}_{file.filename}")
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # Delete old pic if exists
+            if profile_pic and os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], profile_pic)):
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], profile_pic))
+            profile_pic = filename
+            session['profile_pic'] = profile_pic
+
+        cursor.execute("""
+            UPDATE users SET name=%s, email=%s, phone=%s, bio=%s, profile_pic=%s WHERE user_id=%s
+        """, (name, email, phone, bio, profile_pic, session["user_id"]))
+        db.commit()
+        
+        session['user_name'] = name 
+        return redirect("/profile")
+    
+    return render_template("profile.html", user=user_info)
+
+# 4. Public Profile Route (Stage 2 - Let users see each other)
+@app.route("/user/<int:user_id>")
+def public_profile(user_id):
+    cursor.execute("SELECT user_id, name, role, email, phone, bio, profile_pic FROM users WHERE user_id=%s", (user_id,))
+    target_user = cursor.fetchone()
+    
+    if not target_user:
+        return "User not found", 404
+        
+    user_skills = []
+    if target_user['role'] == 'provider':
+        cursor.execute("SELECT * FROM skills WHERE provider_id=%s", (user_id,))
+        user_skills = cursor.fetchall()
+        
+    return render_template("public_profile.html", user=target_user, skills=user_skills)
+
+#  Search Profiles
+@app.route("/search-profiles")
+def search_profiles():
+    if "user_id" not in session:
+        return redirect("/login")
+    
+    query = request.args.get("q", "").strip()
+    results = []
+
+    if query:
+        # Search for BOTH users and providers
+        cursor.execute("""
+            SELECT user_id, name, role, profile_pic, bio 
+            FROM users 
+            WHERE role IN ('user', 'provider') AND name LIKE %s
+            LIMIT 20
+        """, (f"%{query}%",))
+        results = cursor.fetchall()
+        
+    return render_template("search_profiles.html", results=results, query=query)
+
 if __name__ == "__main__":
     app.run(debug=True)
-
-

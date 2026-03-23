@@ -1,71 +1,120 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard{% endblock %}
-
 {% block content %}
+<div class="app-container-large">
+    
+    <div class="dash-welcome-wrapper">
+        <h1>Welcome , {{ session['user_name'] }} 👋</h1>
+        <p>Here is your activity summary.</p>
+    </div>
 
-<!-- HERO -->
-<div class="hero-box">
-    <h2>👋 Welcome {{ session['user_name'] }}</h2>
-    <p>Manage your activity from here</p>
-</div>
+    <h3 class="dash-section-title">
+        <i class="fa-solid fa-chart-pie"></i> 
+        Overall Stats
+    </h3>
 
-<!-- STATS -->
-<div class="dashboard-grid">
+    <div class="stats-container">
+        {% if session['role'] == 'provider' %}
+            <div class="stat-box blue">
+                <i class="fa-solid fa-layer-group"></i>
+                <div>
+                    <h3>{{ total_skills or 0 }}</h3>
+                    <p>Total Skills</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="stat-box blue">
+                <i class="fa-solid fa-star"></i>
+                <div>
+                    <h3>{{ total_feedbacks or 0 }}</h3>
+                    <p>Feedbacks Given</p>
+                </div>
+            </div>
+        {% endif %}
 
-    {% if session['role'] == 'provider' %}
-        <div class="card">
-            <h3>{{ total_skills or 0 }}</h3>
-            <p>Total Skills</p>
+        <div class="stat-box purple">
+            <i class="fa-solid fa-calendar-check"></i>
+            <div>
+                <h3>{{ total_bookings or 0 }}</h3>
+                <p>Total Bookings</p>
+            </div>
         </div>
-    {% else %}
-        <div class="card">
-            <h3>{{ total_feedbacks or 0 }}</h3>
-            <p>Total Feedbacks</p>
+
+        <div class="stat-box orange">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <div>
+                <h3>{{ pending_bookings or 0 }}</h3>
+                <p>Pending</p>
+            </div>
         </div>
-    {% endif %}
 
-    <div class="card">
-        <h3>{{ total_bookings or 0 }}</h3>
-        <p>Total Bookings</p>
+        <div class="stat-box green">
+            <i class="fa-solid fa-check-double"></i>
+            <div>
+                <h3>{{ completed_bookings or 0 }}</h3>
+                <p>Completed</p>
+            </div>
+        </div>
     </div>
 
-    <div class="card">
-        <h3>{{ pending_bookings or 0 }}</h3>
-        <p>Pending</p>
+    <h3 class="dash-section-title">
+        <i class="fa-solid fa-bolt"></i> 
+        Quick Actions
+    </h3>
+
+    <div class="action-cards">
+        {% if session['role'] == 'provider' %}
+            <a href="/add-skill" class="action-card">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Add Skill</span>
+            </a>
+
+            <a href="/my-skills" class="action-card">
+                <i class="fa-solid fa-list"></i>
+                <span>My Skills</span>
+            </a>
+
+            <a href="/provider-bookings" class="action-card">
+                <i class="fa-solid fa-briefcase"></i>
+                <span>Job Requests</span>
+            </a>
+        {% else %}
+            <a href="/all-skills" class="action-card">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Find Skills</span>
+            </a>
+
+            <a href="/my-bookings" class="action-card">
+                <i class="fa-solid fa-calendar-alt"></i>
+                <span>My Bookings</span>
+            </a>
+
+            <a href="/my-feedbacks" class="action-card">
+                <i class="fa-solid fa-comment-dots"></i>
+                <span>Give Feedback</span>
+            </a>
+        {% endif %}
     </div>
 
-    <div class="card">
-        <h3>{{ completed_bookings or 0 }}</h3>
-        <p>Completed</p>
+    <div class="recent-box">
+        <h3 class="dash-section-title" style="color: white; margin-top: 0;">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+             Recent Activity
+        </h3>
+
+        {% if recent_data %}
+            {% for item in recent_data %}
+                <div class="recent-item">
+                    <i class="fa-solid fa-check-circle activity-icon"></i>
+                    <p>{{ item }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="recent-item empty-state" style="text-align:center; justify-content: center;">
+                <p>No recent activity yet.</p>
+            </div>
+        {% endif %}
     </div>
 
 </div>
-
-<!-- ACTION -->
-<div class="quick-actions">
-
-{% if session['role'] == 'provider' %}
-    <a href="/add-skill" class="action-btn">➕ Add Skill</a>
-    <a href="/my-skills" class="action-btn">📋 My Skills</a>
-{% else %}
-    <a href="/all-skills" class="action-btn">🔎 Browse Services</a>
-    <a href="/my-bookings" class="action-btn">📦 My Bookings</a>
-{% endif %}
-
-</div>
-
-<!-- RECENT -->
-<div class="recent-box">
-    <h3>Recent Activity</h3>
-
-    {% if recent_data %}
-        {% for item in recent_data %}
-            <div class="recent-item">{{ item }}</div>
-        {% endfor %}
-    {% else %}
-        <p>No recent activity</p>
-    {% endif %}
-</div>
-
 {% endblock %}

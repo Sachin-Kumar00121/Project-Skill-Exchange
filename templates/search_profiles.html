@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Search Profiles{% endblock %}
+{% block content %}
+<div class="app-container-large">
+    <div class="dash-welcome-wrapper mb-25">
+        <h1>Search Results</h1>
+        <p>Showing profiles matching: "<strong>{{ query }}</strong>"</p>
+    </div>
+
+    <div class="public-skills-grid">
+        {% if results %}
+            {% for r in results %}
+                <div class="public-skill-card search-result-card">
+                    {% if r.profile_pic %}
+                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + r.profile_pic) }}" class="avatar-circle search-avatar">
+                    {% else %}
+                        <div class="avatar-circle search-avatar-text">{{ r.name[0] | upper }}</div>
+                    {% endif %}
+                    
+                    <h3 class="search-name">{{ r.name }}</h3>
+                    <span class="role-badge active-status search-role-badge">{{ r.role | title }}</span>
+                    
+                    <p class="search-bio">{{ r.bio[:50] ~ '...' if r.bio else 'No bio available.' }}</p>
+                    
+                    <a href="/user/{{ r.user_id }}" class="btn-outline search-view-btn">
+                        View Profile
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-box-state search-empty-state">
+                <i class="fa-solid fa-users-slash search-empty-icon"></i>
+                <p>No profiles found matching "{{ query }}".</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

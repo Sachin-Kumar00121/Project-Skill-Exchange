@@ -1,76 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>{% block title %}Dashboard{% endblock %}</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SkillX{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
 </head>
 
 <body data-theme="light">
 
-<!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="appSidebar">
+    <div class="sidebar-header">
+        <h2 class="logo">⚡ SkillX</h2>
+    </div>
 
-    <h2 class="logo">⚡ SkillX</h2>
+    <ul class="sidebar-links">
 
-    <ul>
-        <li><a href="/dashboard">🏠 Dashboard</a></li>
+        <li><a href="/dashboard">
+            <i class="fa-solid fa-house"></i> 
+            <span>Dashboard</span></a>
+        </li>
 
         {% if session['role'] == 'provider' %}
-            <li><a href="/add-skill">➕ Add Skill</a></li>
-            <li><a href="/my-skills">📋 My Skills</a></li>
-            <li><a href="/provider-bookings">📦 My Bookings</a></li>
+            <li>
+                <a href="/add-skill">
+                <i class="fa-solid fa-plus-circle"></i> 
+                <span>Add Skill</span></a>
+            </li>
+
+            <li>
+                <a href="/my-skills">
+                <i class="fa-solid fa-list-check"></i> 
+                <span>My Skills</span></a>
+            </li>
+
+            <li>
+                <a href="/provider-bookings">
+                <i class="fa-solid fa-briefcase"></i> 
+                <span>My bookings</span></a>
+            </li>
+
         {% else %}
-            <li><a href="/all-skills">🔎 Browse Services</a></li>
-            <li><a href="/my-bookings">📦 My Bookings</a></li>
-            <li><a href="/my-feedbacks">⭐ My Feedbacks</a></li>
+
+            <li>
+                <a href="/all-skills">
+                <i class="fa-solid fa-search"></i>
+                <span>Search Services</span></a>
+            </li>
+
+            <li>
+                <a href="/my-bookings">
+                <i class="fa-solid fa-calendar-check"></i> 
+                <span>My Bookings</span></a>
+            </li>
+
+            <li>
+                <a href="/my-feedbacks">
+                <i class="fa-solid fa-star"></i>
+                <span>Give Feedback</span></a>
+            </li>
+
         {% endif %}
 
-        <li><a href="/change-password">🔐 Change Password</a></li>
-        <li><a href="/logout" class="logout">🚪 Logout</a></li>
-    </ul>
+        <li>
+            <a href="/change-password">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Change Password</span></a>
+        </li>
 
+        <li class="divider"></li>
+
+        <li>
+            <a href="/logout" class="logout">
+            <i class="fa-solid fa-power-off"></i> 
+            <span>Logout</span></a>
+        </li>
+
+    </ul>
 </div>
 
-<!-- MAIN -->
-<div class="main-content">
-
-    <!-- TOPBAR -->
+<div class="main-content" id="appMainContent">
     <div class="topbar">
+        
+<div class="top-left-group">
+    <button class="toggle-sidebar" id="toggle-sidebar">
+        <i class="fa-solid fa-bars-staggered"></i>
+    </button>
+    
+    <div class="search-wrapper-top">
+        <form action="/search-profiles" method="GET" class="top-search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="q" placeholder="Search users or providers..." value="{{ query or '' }}" required>
+        </form>
 
-        <div class="top-left">
-            <h3>Welcome {{ session['user_name'] }}</h3>
-        </div>
-
+        {% if query %}
+            <a href="/dashboard" class="btn-clear-top" title="Clear and go to Dashboard">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </a>
+        {% endif %}
+    </div>
+    </div>
+        
         <div class="top-center">
             <span class="badge role">Role: {{ session.role | title }}</span>
-
-            {% if user_status == "blocked" %}
-                <span class="badge blocked">Blocked</span>
-            {% else %} <br><br>
-                <span class="badge active-status">Active</span>
-            {% endif %}
+            <span class="badge active-status">Active</span>
         </div>
 
         <div class="top-right">
-            <button id="themeToggle" class="btn btn-warning">
-                Toggle Theme
+            <button id="themeToggle" class="icon-btn theme-switcher">
+                <i class="fa-solid fa-moon"></i>
             </button>
-        </div>
 
+            <div class="app-notification">
+
+                <button class="icon-btn" id="notify-btn">
+                    <i class="fa-solid fa-bell"></i>
+                    {% if unread_count and unread_count > 0 %}
+                        <span class="count-badge">{{ unread_count }}</span>
+                    {% endif %}
+                </button>
+
+                <div class="notification-dropdown" id="notify-dropdown">
+                    <div class="dropdown-header">
+                        <h3>Notifications</h3>
+                    </div>
+
+                    <div class="notify-list">
+                        {% if notifications %}
+                            {% for n in notifications %}
+                                <div class="notify-item {% if not n.is_read %}unread{% endif %}">
+                                    <p>{{ n.message }}</p>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="notify-item empty-notify">
+                                <p>No new messages</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <a href="/notifications" class="dropdown-footer">View All Notifications</a>
+                </div>
+            </div>
+
+            <div class="app-profile">
+
+                <button class="avatar-btn" id="profile-btn">
+                    {% if session.get('profile_pic') %}
+                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + session['profile_pic']) }}" class="avatar-img">
+                    {% else %}
+                        <div class="avatar-circle">{{ session['user_name'][0] | upper }}</div>
+                    {% endif %}
+                    <span>{{ session['user_name'].split()[0] }}</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+
+                <div class="profile-dropdown" id="profile-dropdown">
+                    <div class="dropdown-header">
+                        <h4>{{ session['user_name'] }}</h4>
+                        <p class="dropdown-role-txt">{{ session['role'] | title }}</p>
+                    </div>
+
+                    <a href="/profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
+                    <a href="/change-password"><i class="fa-solid fa-key"></i> Change Password</a>
+
+                    <div class="divider"></div>
+                    <a href="/logout" class="logout-link"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- CONTENT -->
     <div class="content-area">
         {% block content %}{% endblock %}
     </div>
-
 </div>
 
 <script src="{{ url_for('static', filename='js/theme.js') }}"></script>

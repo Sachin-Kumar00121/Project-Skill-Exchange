@@ -1,3 +1,4 @@
+ // book popup 
 
 function openPopup(skillId, price, unit) {
     document.getElementById("bookingPopup").style.display = "block";
@@ -110,7 +111,7 @@ setTimeout(()=>{
 el.classList.add("active");
 }, i * 80);
 }else{
-el.classList.remove("active"); // repeat animation
+el.classList.remove("active"); 
 }
 });
 }

@@ -1,6 +1,6 @@
-/* =========================
+/*
    ADMIN SIDEBAR
-========================= */
+ */
 
 .admin-sidebar {
     width: 250px;
@@ -32,9 +32,9 @@
     color: white;
 }
 
-/* =========================
+/* 
    CONTENT AREA
-========================= */
+ */
 
 .admin-content {
     margin-left: 270px;
@@ -53,9 +53,9 @@
     font-weight: 600;
 }
 
-/* =========================
+/*
    CARD
-========================= */
+ */
 
 .admin-card {
     background: white;
@@ -68,9 +68,9 @@ body[data-theme="dark"] .admin-card {
     background: #1e293b;
 }
 
-/* =========================
+/* 
    RESPONSIVE
-========================= */
+ */
 
 @media (max-width: 900px) {
 
@@ -84,10 +84,10 @@ body[data-theme="dark"] .admin-card {
     }
 
 }
-/* =========================
+/* 
    DASHBOARD STATS
-========================= */
-
+*/
+ 
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -121,9 +121,7 @@ body[data-theme="dark"] .stat-box {
     background: #1e293b;
 }
 
-/* =========================
-   MODERN TABLE SYSTEM
-========================= */
+/*  MODERN TABLE SYSTEM  */
 
 .admin-table {
     width: 100%;
@@ -178,9 +176,9 @@ body[data-theme="dark"] .admin-table tbody tr:hover {
     background: #0f172a;
 }
 
-/* =========================
+/* 
    FILTER BAR MODERN
-========================= */
+ */
 
 .filter-bar {
     display: flex;
@@ -214,9 +212,9 @@ body[data-theme="dark"] .filter-bar select {
     color: white;
 }
 
-/* =========================
+/* 
    BUTTON UNIFORM SIZE
-========================= */
+*/
 
 .btn {
     padding: 8px 18px;
@@ -242,9 +240,9 @@ body[data-theme="dark"] .filter-bar select {
     opacity: 0.9;
 }
 
-/* =========================
+/* 
    BUTTON UNIFORM SIZE
-========================= */
+*/
 
 .btn {
     padding: 8px 18px;
@@ -276,9 +274,9 @@ body[data-theme="dark"] .filter-bar select {
 }
 
 
-/* =========================
+/* 
    CENTER WRAPPER
-========================= */
+ */
 
 .center-wrapper {
     display: flex;
@@ -287,9 +285,7 @@ body[data-theme="dark"] .filter-bar select {
     min-height: 70vh;
 }
 
-/* =========================
-   PASSWORD CARD
-========================= */
+/*  PASSWORD CARD */
 
 .password-card {
     width: 100%;
@@ -309,9 +305,7 @@ body[data-theme="dark"] .password-card {
     margin-bottom: 20px;
 }
 
-/* =========================
-   PASSWORD FIELD
-========================= */
+/* PASSWORD FIELD */
 
 .password-field {
     position: relative;
@@ -333,9 +327,7 @@ body[data-theme="dark"] .password-card {
     cursor: pointer;
 }
 
-/* =========================
-   FULL BUTTON
-========================= */
+/* FULL BUTTON */
 
 .btn-full {
     width: 100%;
@@ -346,9 +338,7 @@ body[data-theme="dark"] .password-card {
     text-align: center;
 }
 
-/* =========================
-   MESSAGE
-========================= */
+/*  MESSAGE */
 
 .success-msg {
     color: #16a34a;
@@ -400,9 +390,7 @@ body[data-theme="dark"] .password-card {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================
-   ADMIN LOGIN PAGE
-========================= */
+/*  ADMIN LOGIN PAGE  */
 
 .admin-login-body {
     display: flex;

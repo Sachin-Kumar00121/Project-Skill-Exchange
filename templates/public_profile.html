@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ user.name }} - Profile{% endblock %}
+{% block content %}
+<div class="app-container-large">
+
+    <div class="card-glass public-header-glass">
+        {% if user.profile_pic %}
+            <img src="{{ url_for('static', filename='uploads/profile_pics/' + user.profile_pic) }}" class="avatar-xl public-avatar">
+        {% else %}
+            <div class="avatar-xl public-avatar">{{ user.name[0] | upper }}</div>
+        {% endif %}
+        
+        <h1 class="public-name">{{ user.name }}</h1>
+        <span class="role-badge active-status public-role-badge">{{ user.role | title }}</span>
+        
+        {% if user.bio %}
+            <p class="public-bio-text">"{{ user.bio }}"</p>
+        {% endif %}
+    </div>
+
+    {% if user.role == 'provider' %}
+        <h3 class="dash-section-title public-skills-title">
+            <i class="fa-solid fa-toolbox"></i>
+             Offered Skills
+        </h3>
+        
+        <div class="public-skills-grid">
+            {% if skills %}
+                {% for s in skills %}
+                    <div class="public-skill-card">
+                        <h4>{{ s.skill_name }}</h4>
+                        <p class="skill-cat-txt">{{ s.category }}</p>
+                        <span class="badge-price">₹{{ s.price }} {{ s.unit }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-text-msg">No skills added yet.</p>
+            {% endif %}
+        </div>
+
+    {% endif %}
+    <div class="public-profile-footer">
+        <button onclick="history.back()" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> <span>Go Back</span>
+        </button>
+    </div>
+
+</div> 
+{% endblock %}
