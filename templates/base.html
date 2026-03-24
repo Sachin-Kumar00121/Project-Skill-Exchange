@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
-
 </head>
 
 <body data-theme="light">
@@ -18,95 +17,84 @@
     </div>
 
     <ul class="sidebar-links">
-
-        <li><a href="/dashboard">
-            <i class="fa-solid fa-house"></i> 
-            <span>Dashboard</span></a>
+        <li>
+            <a href="/dashboard" class="{% if request.path == '/dashboard' or request.path == '/' %}active{% endif %}">
+                <i class="fa-solid fa-house"></i> 
+                <span>Dashboard</span>
+            </a>
         </li>
 
-        {% if session['role'] == 'provider' %}
+        {% if session.get('role') == 'provider' %}
             <li>
-                <a href="/add-skill">
-                <i class="fa-solid fa-plus-circle"></i> 
-                <span>Add Skill</span></a>
+                <a href="/add-skill" class="{% if request.path == '/add-skill' %}active{% endif %}">
+                    <i class="fa-solid fa-plus-circle"></i> <span>Add Skill</span>
+                </a>
             </li>
-
             <li>
-                <a href="/my-skills">
-                <i class="fa-solid fa-list-check"></i> 
-                <span>My Skills</span></a>
+                <a href="/my-skills" class="{% if request.path == '/my-skills' %}active{% endif %}">
+                    <i class="fa-solid fa-list-check"></i> <span>My Skills</span>
+                </a>
             </li>
-
             <li>
-                <a href="/provider-bookings">
-                <i class="fa-solid fa-briefcase"></i> 
-                <span>My bookings</span></a>
+                <a href="/provider-bookings" class="{% if request.path == '/provider-bookings' %}active{% endif %}">
+                    <i class="fa-solid fa-briefcase"></i> <span>My bookings</span>
+                </a>
             </li>
-
         {% else %}
-
             <li>
-                <a href="/all-skills">
-                <i class="fa-solid fa-search"></i>
-                <span>Search Services</span></a>
+                <a href="/all-skills" class="{% if request.path == '/all-skills' %}active{% endif %}">
+                    <i class="fa-solid fa-search"></i> <span>Search Services</span>
+                </a>
             </li>
-
             <li>
-                <a href="/my-bookings">
-                <i class="fa-solid fa-calendar-check"></i> 
-                <span>My Bookings</span></a>
+                <a href="/my-bookings" class="{% if request.path == '/my-bookings' %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-check"></i> <span>My Bookings</span>
+                </a>
             </li>
-
             <li>
-                <a href="/my-feedbacks">
-                <i class="fa-solid fa-star"></i>
-                <span>Give Feedback</span></a>
+                <a href="/my-feedbacks" class="{% if request.path == '/my-feedbacks' %}active{% endif %}">
+                    <i class="fa-solid fa-star"></i> <span>My Feedback</span>
+                </a>
             </li>
-
         {% endif %}
 
         <li>
-            <a href="/change-password">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>Change Password</span></a>
+            <a href="/change-password" class="{% if request.path == '/change-password' %}active{% endif %}">
+                <i class="fa-solid fa-shield-halved"></i> <span>Change Password</span>
+            </a>
         </li>
-
         <li class="divider"></li>
-
         <li>
-            <a href="/logout" class="logout">
-            <i class="fa-solid fa-power-off"></i> 
-            <span>Logout</span></a>
+            <a href="/logout" class="logout"><i class="fa-solid fa-power-off"></i> <span>Logout</span></a>
         </li>
-
     </ul>
 </div>
 
 <div class="main-content" id="appMainContent">
     <div class="topbar">
         
-<div class="top-left-group">
-    <button class="toggle-sidebar" id="toggle-sidebar">
-        <i class="fa-solid fa-bars-staggered"></i>
-    </button>
-    
-    <div class="search-wrapper-top">
-        <form action="/search-profiles" method="GET" class="top-search-bar">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="q" placeholder="Search users or providers..." value="{{ query or '' }}" required>
-        </form>
+        <div class="top-left-group">
+            <button class="toggle-sidebar" id="toggle-sidebar">
+                <i class="fa-solid fa-bars-staggered"></i>
+            </button>
+            
+            <div class="search-wrapper-top">
+                <form action="/search-profiles" method="GET" class="top-search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" name="q" placeholder="Search users or providers..." value="{{ request.args.get('q', '') }}" required>
+                </form>
 
-        {% if query %}
-            <a href="/dashboard" class="btn-clear-top" title="Clear and go to Dashboard">
-                <i class="fa-solid fa-circle-xmark"></i>
-            </a>
-        {% endif %}
-    </div>
-    </div>
+                {% if request.args.get('q') %}
+                    <a href="/dashboard" class="btn-clear-top" title="Clear and go to Dashboard">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
         
-        <div class="top-center">
-            <span class="badge role">Role: {{ session.role | title }}</span>
-            <span class="badge active-status">Active</span>
+        <div class="topbar-center-badges">
+            <span class="app-badge role-badge">Role: {{ session.get('role', 'User') | title }}</span>
+            <span class="app-badge active-status">Active</span>
         </div>
 
         <div class="top-right">
@@ -115,7 +103,6 @@
             </button>
 
             <div class="app-notification">
-
                 <button class="icon-btn" id="notify-btn">
                     <i class="fa-solid fa-bell"></i>
                     {% if unread_count and unread_count > 0 %}
@@ -127,7 +114,6 @@
                     <div class="dropdown-header">
                         <h3>Notifications</h3>
                     </div>
-
                     <div class="notify-list">
                         {% if notifications %}
                             {% for n in notifications %}
@@ -136,9 +122,7 @@
                                 </div>
                             {% endfor %}
                         {% else %}
-                            <div class="notify-item empty-notify">
-                                <p>No new messages</p>
-                            </div>
+                            <div class="notify-item empty-notify"><p>No new messages</p></div>
                         {% endif %}
                     </div>
                     <a href="/notifications" class="dropdown-footer">View All Notifications</a>
@@ -146,28 +130,35 @@
             </div>
 
             <div class="app-profile">
-
                 <button class="avatar-btn" id="profile-btn">
                     {% if session.get('profile_pic') %}
-                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + session['profile_pic']) }}" class="avatar-img">
+                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + session.get('profile_pic')) }}" class="avatar-img">
                     {% else %}
-                        <div class="avatar-circle">{{ session['user_name'][0] | upper }}</div>
+                        <div class="avatar-circle">{{ session.get('user_name', 'U')[0] | upper }}</div>
                     {% endif %}
-                    <span>{{ session['user_name'].split()[0] }}</span>
+                    <span>{{ session.get('user_name', 'User').split()[0] }}</span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
 
                 <div class="profile-dropdown" id="profile-dropdown">
                     <div class="dropdown-header">
-                        <h4>{{ session['user_name'] }}</h4>
-                        <p class="dropdown-role-txt">{{ session['role'] | title }}</p>
+                        <h4>{{ session.get('user_name', 'User') }}</h4>
+                        <p class="dropdown-role-txt">{{ session.get('role', 'User') | title }}</p>
                     </div>
+                    <a href="/profile">
+                        <i class="fa-solid fa-user-circle"></i> 
+                        My Profile
+                    </a>
 
-                    <a href="/profile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
-                    <a href="/change-password"><i class="fa-solid fa-key"></i> Change Password</a>
-
+                    <a href="/change-password">
+                        <i class="fa-solid fa-key"></i>
+                         Change Password
+                    </a>
                     <div class="divider"></div>
-                    <a href="/logout" class="logout-link"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+                    <a href="/logout" class="logout-link">
+                        <i class="fa-solid fa-sign-out-alt"></i>
+                         Logout
+                    </a>
                 </div>
             </div>
         </div>

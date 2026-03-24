@@ -1,30 +1,98 @@
-<h2>Give Feedback</h2>
+{% extends "base.html" %}
 
-<form method="POST">
+{% block title %}Give Feedback - SkillX{% endblock %}
 
-    <label>Rating:</label><br>
-    <select name="rating" required>
-        <option value="">Select Rating</option>
-        <option value="5">⭐⭐⭐⭐⭐ (5)</option>
-        <option value="4">⭐⭐⭐⭐ (4)</option>
-        <option value="3">⭐⭐⭐ (3)</option>
-        <option value="2">⭐⭐ (2)</option>
-        <option value="1">⭐ (1)</option>
-    </select>
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
 
-    <br><br>
+<div class="page-wrapper center-wrapper">
+    <div class="modern-card feedback-card">
+        
+        <div class="feedback-header">
+            <h2><i class="fa-solid fa-star text-warning"></i> Rate Your Experience</h2>
+            <p>How was the service provided?</p>
+        </div>
 
-    <label>Comment:</label><br>
-    <textarea name="comment" rows="4" required 
-              style="width:300px;padding:8px;"></textarea>
+        <form method="POST">
+            <div class="rating-section">
+                <label>Select Rating</label>
+                
+                <div class="js-rating-widget" id="ratingWidgetParent">
+                    <input type="hidden" name="rating" id="ratingInput" value="0" required>
+                    
+                    {% for i in range(1, 6) %}
+                    <div class="star-box">
+                        <div class="click-half rating-trigger" data-val="{{ i - 0.5 }}"></div>
+                        <div class="click-full rating-trigger" data-val="{{ i }}"></div>
+                        
+                        <i class="fa-solid fa-star star-gray"></i>
+                        
+                        <div class="star-gold-wrap" id="star-fill-{{ i }}">
+                            <i class="fa-solid fa-star star-gold"></i>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
 
-    <br><br>
+            <div class="input-wrap mb-25">
+                <label>Comment</label>
+                <textarea name="comment" rows="4" required placeholder="Tell us about the provider's work..." class="form-textarea"></textarea>
+            </div>
 
-    <button type="submit"
-        style="background:#28a745;color:white;
-               padding:8px 15px;border:none;
-               border-radius:6px;">
-        Submit Feedback
-    </button>
+            <button type="submit" class="action-btn btn-primary full-width-btn">
+                <i class="fa-solid fa-paper-plane"></i> Submit Feedback
+            </button>
+            
+            <div class="text-center mt-15">
+                <a href="/my-bookings" class="action-btn btn-outline full-width-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
 
-</form>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let finalRatingVal = 0;
+        const ratingInput = document.getElementById('ratingInput');
+        const widgetParent = document.getElementById('ratingWidgetParent');
+
+        function renderStars(val) {
+            for (let i = 1; i <= 5; i++) {
+                let fillWrap = document.getElementById('star-fill-' + i);
+                if (!fillWrap) continue;
+
+                if (val >= i) {
+                    fillWrap.style.width = '100%'; 
+                } else if (val === i - 0.5) {
+                    fillWrap.style.width = '50%';  
+                } else {
+                    fillWrap.style.width = '0%';   
+                }
+            }
+        }
+
+        
+        document.querySelectorAll('.rating-trigger').forEach(trigger => {
+            let val = parseFloat(trigger.getAttribute('data-val'));
+            
+            trigger.addEventListener('click', function() {
+                finalRatingVal = val;
+                ratingInput.value = val;
+                renderStars(val);
+            });
+            
+            trigger.addEventListener('mouseover', function() {
+                renderStars(val);
+            });
+        });
+
+      
+        if(widgetParent) {
+            widgetParent.addEventListener('mouseout', function() {
+                renderStars(finalRatingVal);
+            });
+        }
+    });
+</script>
+{% endblock %}

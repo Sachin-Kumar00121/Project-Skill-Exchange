@@ -1,159 +1,174 @@
-<!DOCTYPE html>  
-<html>  
-<head>  
-    <title>All Skills</title>  
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>  
-</head>  
-<body>  
-  
-<div style="display:flex; justify-content:space-between; align-items:center;">  
-  
-    <h2>All Skills</h2>  
-  
-    <form method="GET" action="/all-skills" style="display:flex; gap:8px;">  
-        <input type="text"  
-               name="search"  
-               placeholder="Search skill or provider..."  
-               value="{{ request.args.get('search','') }}"  
-               style="padding:6px 10px; border-radius:6px; border:1px solid #ccc;">  
-  
-        <button type="submit"  
-                style="padding:6px 12px;  
-                       background:#2563eb;  
-                       color:white;  
-                       border:none;  
-                       border-radius:6px;  
-                       cursor:pointer;">  
-            🔍 Search  
-        </button>  
-    </form>  
-  
-</div>  
-  
-<!-- Category Filter -->  
-<a href="/all-skills">All</a> |  
-<a href="/all-skills?category=Electrical">Electrical</a> |  
-<a href="/all-skills?category=Teaching">Teaching</a> |  
-<a href="/all-skills?category=Repair">Repair</a> |  
-<a href="/all-skills?category=Electronics">Electronics</a>  
-  
-<hr>  
-  
-{% for s in skills %}  
-  
-<div  class="skill-card" style="border:1px solid #ccc; padding:15px; margin-bottom:15px;">  
-  
-    <!-- Photo -->  
-    {% if s.photo %}  
-        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}"   
-             width="150" height="120">  
-        <br><br>  
-    {% endif %}  
-  
-    <!-- Skill Info -->  
-  
-    <div class="rating-badge">  
-    <!-- ⭐ Star Display -->  
-        {% for i in range(1,6) %}  
-            {% if i <= (s.avg_rating | int) %}  
-                <span style="color:gold;">★</span>  
-            {% else %}  
-                <span style="color:gray;">★</span>  
-            {% endif %}  
-        {% endfor %}  
-  
-        ({{ s.avg_rating | round(1) if s.avg_rating else 0 }})  
-  
-        <!-- 🏆 Top Rated Badge -->  
-        {% if s.avg_rating and s.avg_rating >= 4.5 %}  
-            <span style="background:gold;color:black;  
-                         padding:3px 6px;border-radius:5px;  
-                         font-size:11px;margin-left:6px;">  
-                🏆 Top Rated  
-            </span>  
-        {% endif %}  
-  
-     </div>  
-  
-    <b>{{ s.skill_name }}</b> ({{ s.category }}) <br>  
-    Provider: {{ s.provider_name }} <br>  
-    Experience: {{ s.experience }} years <br>  
-    Base Price: ₹{{ s.price }} ({{ s.unit }}) <br><br>  
-    {{ s.description }} <br><br>  
-      
-    {% if session['role'] == 'user' %}  
-        <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')">  
-         Book Now  
-        </button>  
-    {% endif %}  
-  
-</div>  
-  
-{% endfor %}  
-  
-  
-<!-- ================= POPUP BOOKING FORM ================= -->  
-  
-<div id="bookingPopup"   
-     style="display:none;  
-     position:fixed;  
-     top:50%;  
-     left:50%;  
-     transform:translate(-50%, -50%);  
-     background:white;  
-     padding:25px;  
-     border-radius:10px;  
-     box-shadow:0 0 15px rgba(0,0,0,0.3);  
-     width:350px;  
-     z-index:1000;">  
-  
-    <h3>Book Service</h3>  
-  
-    <form method="POST" action="/book">  
-  
-        <input type="hidden" name="skill_id" id="popupSkillId">  
-  
-        Offered Price:<br>  
-        <input type="number" name="offered_price" id="popupPrice" required>  
-        <br><br>  
-  
-        Unit:<br>  
-        <input type="text" name="unit" id="popupUnit" required>  
-        <br><br>  
-  
-        Date:<br>  
-        <input type="date" name="service_date" required>  
-        <br><br>  
-  
-       <label>Time:</label><br>  
-  
-       <input type="number" name="hour" min="1" max="12" required style="width:60px;">:  
-       <input type="number" name="minute" min="0" max="59" required style="width:60px;">  
-  
-         <select name="ampm" required>  
-         <option value="AM">AM</option>  
-         <option value="PM">PM</option>  
-         </select>  
-           
-        <br><br>  
-        <label>Remark:</label>  
-        <textarea name="remark" rows="3" placeholder="Write any special request..." textarea="Justify"   
-         style="width:100%; padding:8px; border-radius:6px; margin-top:5px;"></textarea>  
-       <button type="submit" >  
-         Send  
-       </button>  
-         
-       <button type="button" onclick="closePopup()">Cancel</button>  
-  
-    </form>  
-  
-</div>  
-  
-{% if request.args %}  
-    <a href="/all-skills">← Back</a>  
-{% else %}  
-    <a href="/dashboard">← Back</a>  
-{% endif %}  
-  
-</body>  
-</html>
+{% extends "base.html" %}
+{% block title %}Find Services{% endblock %}
+{% block content %}
+<div class="app-container-large">
+
+    <div class="marketplace-top-bar">
+        <div class="marketplace-title-area">
+            <h1><i class="fa-solid fa-search"></i> Find Services</h1>
+            <p>Browse and book the best skills offered by professionals.</p>
+        </div>
+        
+        <div class="marketplace-action-area">
+            {% if request.args %}
+                <a href="/all-skills" class="btn-outline header-back-btn">
+                    <i class="fa-solid fa-arrow-left"></i> Back to All
+                </a>
+            {% else %}
+                <a href="/dashboard" class="btn-outline header-back-btn">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="marketplace-search-row mb-25">
+        <form method="GET" action="/all-skills" class="marketplace-search-form">
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" placeholder="Search skill or provider..." value="{{ request.args.get('search','') }}">
+            </div>
+            
+            <div class="search-buttons-group">
+                <button type="submit" class="btn-search-primary">Search</button>
+                {% if request.args.get('search') or request.args.get('category') %}
+                    <a href="/all-skills" class="btn-outline btn-clear-marketplace" title="Clear Filters">
+                        <i class="fa-solid fa-xmark"></i> Clear Filters
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="category-filters mb-25">
+        <a href="/all-skills" class="cat-pill {% if not request.args.get('category') %}active{% endif %}">All</a>
+        <a href="/all-skills?category=Electrical" class="cat-pill {% if request.args.get('category') == 'Electrical' %}active{% endif %}">Electrical</a>
+        <a href="/all-skills?category=Teaching" class="cat-pill {% if request.args.get('category') == 'Teaching' %}active{% endif %}">Teaching</a>
+        <a href="/all-skills?category=Repair" class="cat-pill {% if request.args.get('category') == 'Repair' %}active{% endif %}">Repair</a>
+        <a href="/all-skills?category=Electronics" class="cat-pill {% if request.args.get('category') == 'Electronics' %}active{% endif %}">Electronics</a>
+    </div>
+
+    <div class="marketplace-grid">
+        {% if skills %}
+            {% for s in skills %}
+            <div class="marketplace-card">
+                
+                <div class="card-img-container">
+                    {% if s.photo %}
+                        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}" class="card-img-top" alt="Skill Image">
+                    {% else %}
+                        <div class="card-img-placeholder">
+                            <i class="fa-solid fa-toolbox"></i>
+                        </div>
+                    {% endif %}
+                    
+                    {% if s.avg_rating and s.avg_rating >= 4.5 %}
+                        <span class="top-rated-badge"><i class="fa-solid fa-trophy"></i> Top Rated</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-body-content">
+                    
+                    <div class="rating-stars-row">
+                        <div class="stars">
+                            {% for i in range(1,6) %}
+                                {% if i <= (s.avg_rating | int) %}
+                                    <i class="fa-solid fa-star star-filled"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-star star-empty"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="rating-num">({{ s.avg_rating | round(1) if s.avg_rating else 0 }})</span>
+                    </div>
+
+                    <h3 class="skill-card-title">{{ s.skill_name }}</h3>
+                    <span class="skill-cat-label">{{ s.category }}</span>
+
+                    <p class="provider-info-txt">
+                        By <a href="/user/{{ s.provider_id }}" class="provider-link">{{ s.provider_name }}</a> • {{ s.experience }} yrs exp.
+                    </p>
+
+                    <div class="price-highlight">
+                        ₹{{ s.price }} <span>per {{ s.unit }}</span>
+                    </div>
+
+                    <p class="skill-desc-txt">{{ s.description[:80] ~ '...' if s.description and s.description|length > 80 else s.description }}</p>
+                </div>
+
+                <div class="card-footer-action">
+                   {% if session.get('role', '').lower() == 'user' %}
+                        <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')" class="btn-app-primary btn-book-now">
+                            <i class="fa-solid fa-calendar-check"></i> Book Now
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-box-state empty-box-full-width">
+                <i class="fa-solid fa-box-open empty-icon-large"></i>
+                <p>No services available matching your criteria.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<div id="bookingModalOverlay" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-calendar-plus"></i> Book Service</h3>
+            <button type="button" class="btn-close-modal" onclick="closePopup()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form method="POST" action="/book" class="modal-body-form">
+            <input type="hidden" name="skill_id" id="popupSkillId">
+
+            <div class="form-grid">
+                <div class="input-wrap">
+                    <label>Offered Price (₹)</label>
+                    <input type="number" name="offered_price" id="popupPrice" required>
+                </div>
+                <div class="input-wrap">
+                    <label>Unit</label>
+                    <input type="text" name="unit" id="popupUnit" required>
+                </div>
+            </div>
+
+            <div class="input-wrap mb-20">
+                <label>Service Date</label>
+                <input type="date" name="service_date" required>
+            </div>
+
+            <div class="input-wrap mb-20">
+                <label>Service Time</label>
+                <div class="time-input-group">
+                    <input type="number" name="hour" min="1" max="12" placeholder="HH" required class="time-box">
+                    <span>:</span>
+                    <input type="number" name="minute" min="0" max="59" placeholder="MM" required class="time-box">
+                    <select name="ampm" required class="ampm-box">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-wrap mb-25">
+                <label>Special Remark (Optional)</label>
+                <textarea name="remark" rows="3" placeholder="Write any special request..."></textarea>
+            </div>
+
+            <div class="form-actions modal-actions-custom">
+                <button type="submit" class="btn-app-primary">
+                    <i class="fa-solid fa-paper-plane"></i>
+                     Send Request
+                </button>
+                <button type="button" class="btn-cancel" onclick="closePopup()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}

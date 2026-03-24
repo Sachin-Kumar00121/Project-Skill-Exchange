@@ -9,9 +9,14 @@ from datetime import datetime, time, date
 import re
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import timedelta
 
 app = Flask(__name__)
 app.secret_key = "skill_exchange_secret"
+
+#  Session Timeout Settings
+app.config['SESSION_PERMANENT'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
 #  MySQL Connection
 db = mysql.connector.connect(
@@ -28,7 +33,6 @@ def admin_required():
     if session.get("role") != "admin":
         return False
     return True
-
 
 # Admin login route
 @app.route("/admin-login", methods=["GET","POST"])
@@ -455,7 +459,7 @@ def search_suggest():
     return jsonify([r['skill_name'] for r in results])
 
 
-# 🏠 HOME PAGE
+#  HOME PAGE
 @app.route("/")
 def home():
 
@@ -598,7 +602,7 @@ def register():
     return redirect("/login")
 
 
-# ✅ Login (Email OR Phone)
+#  Login (Email OR Phone)
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -615,20 +619,22 @@ def login():
 
         if user and check_password_hash(user["password"], password):
 
-        
             if user["role"] == "admin":
                 return render_template("auth.html",
                                        error="Admin must login from Admin Panel")
-
 
             if user.get("status") == "blocked":
                 return render_template("auth.html",
                                       error=f"Your account is blocked. Reason: {user.get('block_reason','Contact Admin')}")
 
-        
+            session.clear()
+            
+            # for new session 
             session["user_id"] = user["user_id"]
             session["user_name"] = user["name"]
             session["role"] = user["role"]
+
+            session.permanent = False
 
             return redirect("/dashboard")
 
@@ -638,73 +644,73 @@ def login():
 
     return render_template("auth.html")
 
-#✅ Change Password Route
+
+#  Change password route
 @app.route("/change-password", methods=["GET", "POST"])
 def change_password():
+    
+    if request.args.get("action") == "forgot":
+        session.clear()
+        return redirect("/change-password")
 
     user_id = session.get("user_id")  
 
     if request.method == "POST":
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
 
-        new_password = request.form["new_password"]
-        confirm_password = request.form["confirm_password"]
-
-        #  CASE 1: NOT LOGGED IN 
-      
-        if not user_id:
-            identifier = request.form.get("identifier")
-
-            if not identifier:
-                return render_template("change_password.html",
-                                       error="Enter Email or Phone")
-
-            if new_password != confirm_password:
-                return render_template("change_password.html",
-                                       error="Passwords do not match")
-
-            new_hash = generate_password_hash(new_password)
-
-            if "@" in identifier:
-                cursor.execute("UPDATE users SET password=%s WHERE email=%s",
-                               (new_hash, identifier))
-            else:
-                cursor.execute("UPDATE users SET password=%s WHERE phone=%s",
-                               (new_hash, identifier))
-
-            db.commit()
-
-            return render_template("change_password.html",
-                                   success="Password reset successful")
-
-        #  CASE 2: LOGGED IN
-
-        old_password = request.form["old_password"]
-
-        cursor.execute("SELECT password FROM users WHERE user_id=%s", (user_id,))
-        user = cursor.fetchone()
-
-        if not check_password_hash(user["password"], old_password):
-            return render_template("change_password.html",
-                                   error="Old password incorrect")
+        if not new_password or not confirm_password:
+            return render_template("change_password.html", error="Please fill new password fields")
 
         if new_password != confirm_password:
-            return render_template("change_password.html",
-                                   error="Passwords do not match")
+            return render_template("change_password.html", error="Passwords do not match")
 
         new_hash = generate_password_hash(new_password)
 
-        cursor.execute("UPDATE users SET password=%s WHERE user_id=%s",
-                       (new_hash, user_id))
+        #  CASE 1: NOT LOGGED IN (Forgot Password)
+        if not user_id:
+            identifier = request.form.get("identifier")
+            if not identifier:
+                return render_template("change_password.html", error="Enter Email or Phone number")
 
-        db.commit()
+            if "@" in identifier:
+                cursor.execute("SELECT * FROM users WHERE email=%s", (identifier,))
+            else:
+                cursor.execute("SELECT * FROM users WHERE phone=%s", (identifier,))
+            
+            user = cursor.fetchone()
+            if not user:
+                return render_template("change_password.html", error="User not found")
 
-        return render_template("change_password.html",
-                               success="Password updated successfully")
+            if "@" in identifier:
+                cursor.execute("UPDATE users SET password=%s WHERE email=%s", (new_hash, identifier))
+            else:
+                cursor.execute("UPDATE users SET password=%s WHERE phone=%s", (new_hash, identifier))
+
+            db.commit()
+            return render_template("change_password.html", success="Password reset successful! You can now login.")
+
+        #  CASE 2: LOGGED IN (Change Password)
+        else:
+            old_password = request.form.get("old_password")
+            if not old_password:
+                return render_template("change_password.html", error="Enter your old password")
+
+            cursor.execute("SELECT password FROM users WHERE user_id=%s", (user_id,))
+            user = cursor.fetchone()
+
+            if not check_password_hash(user["password"], old_password):
+                return render_template("change_password.html", error="Old password incorrect")
+
+            cursor.execute("UPDATE users SET password=%s WHERE user_id=%s", (new_hash, user_id))
+            db.commit()
+
+            return render_template("change_password.html", success="Password updated successfully!")
 
     return render_template("change_password.html")
 
 
-# ✅ Dashboard 
+#  Dashboard 
 @app.route("/dashboard")
 def dashboard():
 
@@ -951,6 +957,8 @@ def all_skills():
     user_id = session.get("user_id")
     role = session.get("role")
     hide_skill = session.pop("hide_skill", None)
+    
+    user_name = session.get("user_name", "Guest")
 
     base_query = """
     SELECT s.*, 
@@ -999,7 +1007,7 @@ def all_skills():
     skills = cursor.fetchall()
 
     response = make_response(
-        render_template("all_skills.html", skills=skills)
+        render_template("all_skills.html", skills=skills, user_name=user_name)
     )
     response.headers["Cache-Control"] = "no-store"
     return response
@@ -1320,7 +1328,7 @@ def give_feedback(booking_id):
         return redirect("/my-bookings")
 
     if request.method == "POST":
-        rating = request.form["rating"]
+        rating = float(request.form["rating"])
         comment = request.form["comment"]
 
         # Insert Feedback
@@ -1424,7 +1432,7 @@ def edit_feedback(feedback_id):
         return redirect("/login")
 
     if request.method == "POST":
-        rating = request.form["rating"]
+        rating = float(request.form["rating"])
         comment = request.form["comment"]
 
         cursor.execute("""
@@ -1458,7 +1466,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# 🚀 APP FEATURES: NOTIFICATIONS, PROFILE & PUBLIC VIEW
+#  APP FEATURES: NOTIFICATIONS, PROFILE & PUBLIC VIEW
 
 # 1. Global Context Processor 
 @app.context_processor

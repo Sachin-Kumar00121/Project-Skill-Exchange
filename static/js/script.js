@@ -1,17 +1,17 @@
  // book popup 
 
-function openPopup(skillId, price, unit) {
-    document.getElementById("bookingPopup").style.display = "block";
-    document.getElementById("popupSkillId").value = skillId;
-    document.getElementById("popupPrice").value = price;
-    document.getElementById("popupUnit").value = unit;
-}
+  function openPopup(skillId, price, unit) {
+        document.getElementById('popupSkillId').value = skillId;
+        document.getElementById('popupPrice').value = price;
+        document.getElementById('popupUnit').value = unit;
+        document.getElementById('bookingModalOverlay').classList.add('show-modal');
+    }
 
-function closePopup() {
-    document.getElementById("bookingPopup").style.display = "none";
+    function closePopup() {
+        document.getElementById('bookingModalOverlay').classList.remove('show-modal');
+    }
 
-}
-
+    
 // 🔹 Back button popup
 window.onpageshow = function(event) {
     if (event.persisted) {
@@ -234,4 +234,72 @@ function checkMatch() {
         match.style.color = "red";
     }
 }
+
+// For User Side Booking 
+ function filterBookings() {
+       
+        const input = document.getElementById('bookingSearchInput');
+        const filterText = input.value.toLowerCase();
+        
+        
+        const bookingItems = document.getElementsByClassName('booking-item');
+        const grid = document.getElementById('bookingsGrid');
+        const noResults = document.getElementById('noResultsFound');
+        const btnClear = document.getElementById('btnClearSearch');
+        
+        let visibleCount = 0;
+
+        btnClear.style.display = filterText.length > 0 ? "inline-flex" : "none";
+
+     
+        for (let i = 0; i < bookingItems.length; i++) {
+           
+            const skill = bookingItems[i].getAttribute('data-skill');
+            const provider = bookingItems[i].getAttribute('data-provider');
+
+            if (skill.includes(filterText) || provider.includes(filterText)) {
+                bookingItems[i].style.display = ""; 
+                visibleCount++;
+            } else {
+                bookingItems[i].style.display = "none"; 
+            }
+        }
+
+       
+        if (visibleCount === 0 && filterText.length > 0) {
+            grid.style.display = "none";
+            noResults.style.display = "block";
+        } else {
+            grid.style.display = "grid";
+            noResults.style.display = "none";
+        }
+    }
+
+    function clearSearch() {
+        const input = document.getElementById('bookingSearchInput');
+        input.value = ""; 
+        filterBookings(); 
+        input.focus(); 
+    }
+
+// Custom Module for feedback
+ let formToSubmit = null;
+
+    function confirmDelete(event, form) {
+        event.preventDefault();
+        formToSubmit = form;
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+        formToSubmit = null;
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (formToSubmit) {
+            formToSubmit.submit();
+        }
+    });
+
 
