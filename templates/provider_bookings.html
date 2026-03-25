@@ -1,129 +1,160 @@
-<h2>My Rating Overview</h2>
+{% extends "base.html" %}
+{% block title %}My Bookings - SkillX{% endblock %}
+{% block content %}
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+<div class="page-wrapper app-container-large">
 
-<div style="padding:15px;border:1px solid #ccc;border-radius:8px;margin-bottom:20px;">
-    
-    <h3>
-        ⭐ Average Rating:
-        {{ rating_data.avg_rating | round(1) if rating_data.avg_rating else 0 }}
-    </h3>
-
-    <p>
-        📊 Total Reviews:
-        {{ rating_data.total_reviews if rating_data.total_reviews else 0 }}
-    </p>
-
-</div>
-
-<h2>Booking Requests</h2>
-
-{% for booking in bookings %}
-
-<div  style="padding:15px;border:1px solid #ccc;border-radius:8px;margin-bottom:20px;">
-    <strong>{{ booking.skill_name }}</strong><br>
-    User: {{ booking.user_name }}<br>
-    <p>Offered Price: ₹{{ booking.offered_price }}</p>
-    <p>Unit: {{ booking.unit }}</p>
-    <p>Date: {{ booking.display_date }}</p>
-    <p>Time: {{ booking.display_time }}</p>
-    <p>Remark: {{ booking.remark }}</p>
-
-    Status:
-    {% if booking.status == "pending" %}
-        <span style="color:orange; font-weight:bold;">Pending</span>
-
-    {% elif booking.status == "accepted" %}
-        <span style="color:green; font-weight:bold;">Accepted</span>
-
-    {% elif booking.status == "rejected" %}
-        <span style="color:red; font-weight:bold;">Rejected</span>
-
-    {% elif booking.status == "cancelled" %}
-        <span style="color:gray; font-weight:bold;">Cancelled by User</span>
-
-    {% elif booking.status == "completed" %}
-    <span style="color:blue; font-weight:bold;">Completed</span>    
-
-    {% endif %}
-    <br><br>
-
-     {% if booking.status == "accepted" %}
-      <p style="color:green; font-weight:bold;">
-      You accepted this booking.
-      </p>
-     {% endif %}
-
-    {% if booking.status == "completed" %}
-    <p style="color:blue; font-weight:bold;">
-     You completed this booking.
-    </p>
-    {% endif %}
-
-
-    {% if booking.status == "rejected" %}
-     <p style="color:red; font-weight:bold;">
-     You rejected this booking.
-    </p>
-    {% endif %}
-
-    {% if booking.status == "cancelled" %}
-     <p style="color:gray; font-weight:bold;">
-    User cancelled this booking.
-    </p>
-    {% endif %}
-
-    {% if booking.status == "pending" %}
-        <form method="POST" action="/update-booking/{{ booking.booking_id }}/accepted">
-            <button type="submit" style="background:green;color:white;">
-                Accept
-            </button>
-        </form>
-
-        <form method="POST" action="/update-booking/{{ booking.booking_id }}/rejected">
-            <button type="submit" style="background:red;color:white;">
-                Reject
-            </button>
-        </form>
-    {% endif %}
-
-
-   {% if booking.status == "accepted" %}
-    <form method="POST" action="/mark-completed/{{ booking.booking_id }}">
-        <button type="submit" 
-                style="background:#007bff;color:white;padding:6px 10px;border:none;border-radius:5px;">
-            Mark as Completed
-        </button>
-    </form>
-
-   {% endif %}
-
-    <hr>
-</div>
-
-{% endfor %}
-
-<hr>
-
-<h3>Customer Reviews</h3>
-
-{% if reviews %}
-    {% for r in reviews %}
-        <div style="padding:15px;border:1px solid #ddd;border-radius:8px;margin-bottom:15px;">
-
-            <strong>{{ r.skill_name }}</strong><br>
-            📅 {{ r.display_date }} | ⏰ {{ r.display_time }} <br><br>
-
-            👤 {{ r.user_name }} <br>
-            ⭐ Rating: {{ r.rating }} <br><br>
-
-            💬 "{{ r.comment }}" <br>
-
-            <small style="color:#777;font-size:13px;">
-             • {{ r.display_created_at }}
-            </small>
+    <div class="page-header-container">
+        <div class="page-header-text">
+            <h2><i class="fa-solid fa-briefcase icon-cyan"></i> Client Bookings</h2>
+            <p>Manage all your service requests and schedules easily.</p>
         </div>
-    {% endfor %}
-{% else %}
-    <p>No reviews yet.</p>
-{% endif %}
+    </div>
 
-<a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a>
+    <div class="filter-section-wrapper">
+        <div class="search-input-group">
+            <i class="fa-solid fa-search search-icon"></i>
+            <input type="text" id="bookingSearchInput" oninput="handleBookingSearch()" 
+            placeholder="Search bookings by client or skill name...">
+
+            <button type="button" class="btn-clear-search" id="btnClearBookingSearch" 
+            onclick="clearBookingSearch()" title="Clear Search">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    {% if bookings %}
+    <div class="app-cards-grid" id="providerBookingsGrid">
+        {% for booking in bookings %}
+        <div class="modern-service-card booking-item-card" 
+        data-search="{{ booking.skill_name | lower }} {{ booking.user_name | lower }}">
+            
+            <div class="card-top-section">
+                <div class="card-title-badge-flex">
+                    <h3 class="skill-title-txt">{{ booking.skill_name }}</h3>
+                    <span class="status-badge status-{{ booking.status }}">{{ booking.status }}</span>
+                </div>
+            </div>
+                
+            <div class="card-middle-content">
+                <div class="detail-text-row">
+                    <i class="fa-solid fa-user"></i> 
+                    <strong>Client:</strong> {{ booking.user_name }}
+                </div>
+
+                <div class="detail-text-row">
+                    <i class="fa-solid fa-calendar-day"></i>
+                     <strong>Date:</strong> {{ booking.display_date }}
+                </div>
+
+                <div class="detail-text-row">
+                    <i class="fa-solid fa-clock"></i> 
+                    <strong>Time:</strong> {{ booking.display_time }}
+                </div>
+
+                <div class="detail-text-row">
+                    <i class="fa-solid fa-indian-rupee-sign"></i> 
+                    <strong>Price:</strong> ₹{{ booking.offered_price }} / {{ booking.unit }}
+                </div>
+                
+                {% if booking.remark %}
+                <div class="review-feedback-bubble"
+                style="margin-top:15px; padding-top:15px; border-top:1px dashed #e2e8f0;">
+                    <i class="fa-solid fa-comment-dots"
+                     style="color:#00d4ff; margin-right:8px;"></i> <strong>Note:</strong> {{ booking.remark }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="clean-action-footer">
+                {% if booking.status == "pending" %}
+                    <form method="POST" action="/update-booking/{{ booking.booking_id }}/accepted">
+                        <button type="submit" class="app-action-btn btn-solid-accept">
+                            <i class="fa-solid fa-check"></i> Accept
+                        </button>
+                    </form>
+
+                    <form method="POST" action="/update-booking/{{ booking.booking_id }}/rejected">
+                        <button type="submit" class="app-action-btn btn-solid-reject">
+                            <i class="fa-solid fa-xmark"></i> Reject
+                        </button>
+                    </form>
+                {% elif booking.status == "accepted" %}
+                    <form method="POST" action="/mark-completed/{{ booking.booking_id }}">
+                        <button type="submit" class="app-action-btn btn-solid-complete">
+                            <i class="fa-solid fa-flag-checkered"></i> Mark Completed
+                        </button>
+                    </form>
+                {% else %}
+                    <button class="app-action-btn btn-action-disabled" disabled>
+                        <i class="fa-solid fa-lock"></i> No Action Available
+                    </button>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endfor %}
+
+        <div id="noBookingsFound" class="centered-empty-state" style="display: none;">
+            <i class="fa-solid fa-search"></i>
+            <h3>No matching bookings</h3>
+            <p>We couldn't find any bookings matching your search.</p>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="centered-empty-state" style="grid-column: 1 / -1;">
+        <i class="fa-solid fa-folder-open" style="font-size: 60px;"></i>
+        <h3 style="margin-top:20px;">No Bookings Yet</h3>
+        <p>When clients book your services, they will appear here.</p>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    function handleBookingSearch() {
+        const input = document.getElementById('bookingSearchInput').value.toLowerCase();
+        const clearBtn = document.getElementById('btnClearBookingSearch');
+        const cards = document.getElementsByClassName('booking-item-card');
+        const grid = document.getElementById('providerBookingsGrid');
+        const noResults = document.getElementById('noBookingsFound');
+        let visibleCount = 0;
+
+        if (input.length > 0) {
+            clearBtn.style.visibility = 'visible';
+            clearBtn.style.opacity = '1';
+        } else {
+            clearBtn.style.visibility = 'hidden';
+            clearBtn.style.opacity = '0';
+        }
+
+        if (grid) {
+            for (let i = 0; i < cards.length; i++) {
+                let searchData = cards[i].getAttribute('data-search');
+                if (searchData.includes(input)) {
+                    cards[i].style.display = "flex"; 
+                    visibleCount++;
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+
+            if (visibleCount === 0 && input.length > 0) {
+                noResults.style.display = "flex";
+            } else {
+                noResults.style.display = "none";
+            }
+        }
+    }
+
+    function clearBookingSearch() {
+        const input = document.getElementById('bookingSearchInput');
+        input.value = '';
+        handleBookingSearch(); 
+        input.focus();
+    }
+</script>
+
+{% endblock %}

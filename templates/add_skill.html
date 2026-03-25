@@ -1,43 +1,129 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Skill</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Add Skill</h2>
+{% block title %}Add New Skill - SkillX{% endblock %}
 
-{% if success %}
-    <p style="color:green; text-align:center;">{{ success }}</p>
-{% endif %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
 
-{% if error %}
-    <p style="color:red; text-align:center;">{{ error }}</p>
-{% endif %}
+<div class="page-wrapper app-container-mid">
 
-<div class="card">
-    <form method="POST" enctype="multipart/form-data">
-        <input type="text" name="skill_name" placeholder="Skill Name" required>
+    <div class="page-header-container">
+        <div class="page-header-text">
+            <h2><i class="fa-solid fa-plus-circle icon-cyan"></i> Add New Service</h2>
+            <p>Offer your expertise and start getting bookings today.</p>
+        </div>
+        <div class="header-back-btn">
+            <a href="/dashboard" class="action-btn btn-outline">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
 
-        <input type="text" name="category" placeholder="Category" required>
-        
-        <input type="number" name="price" placeholder="Base Price" required>
+    {% if success %}
+        <div class="alert-box alert-success">
+            <i class="fa-solid fa-circle-check"></i> {{ success }}
+        </div>
+    {% endif %}
 
-        <input type="text" name="unit" placeholder="Unit (per hour / per day)" required>
+    {% if error %}
+        <div class="alert-box alert-error">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
+        </div>
+    {% endif %}
 
-        <input type="number" name="experience" placeholder="Experience (years)" required>
+    <div class="modern-card">
+        <form method="POST" enctype="multipart/form-data">
 
-        <textarea name="description" placeholder="Description" required></textarea>
+            <div class="form-grid mb-20">
+                <div class="input-wrap">
+                    <label>Skill / Service Name</label>
+                    <input type="text" name="skill_name" placeholder="e.g., Professional Plumbing" required>
+                </div>
 
-        <input type="file" name="photo" accept="image/*">
+                <div class="input-wrap">
+                    <label>Category</label>
+                    <input type="text" name="category" placeholder="e.g., Plumber, Cleaner, IT" required>
+                </div>
 
-        <button type="submit" class="btn">Add Skill</button>
-    </form>
+                <div class="input-wrap">
+                    <label>Base Price (₹)</label>
+                    <input type="number" name="price" placeholder="e.g., 500" required>
+                </div>
+
+                <div class="input-wrap">
+                    <label>Pricing Unit</label>
+                    <input type="text" name="unit" placeholder="e.g., per car, per project" required>
+                </div>
+            </div>
+
+            <div class="input-wrap mb-20">
+                <label>Years of Experience</label>
+                <input type="number" name="experience" placeholder="e.g., 5" required>
+            </div>
+
+            <div class="input-wrap mb-20">
+                <label>Description (Tell clients what you offer)</label>
+                <textarea name="description" rows="4" class="form-textarea" placeholder="Describe your service in detail..." required></textarea>
+            </div>
+
+            <div class="input-wrap mb-25">
+                <label>Service Photo (Optional)</label>
+                
+                <div class="skill-photo-uploader-box" id="photoUploaderBox">
+                    <input type="file" name="photo" accept="image/*" class="clean-file-input" id="photoInput">
+                    
+                    <div class="uploader-main-content">
+                        <i class="fa-solid fa-camera-rotate"></i>
+                        <span id="uploaderText">Drag & drop or click to upload service photo</span>
+                        <span class="file-specs">Accepted: JPG, PNG, WEBP. Max 5MB.</span>
+                    </div>
+                    
+                    <button type="button" class="cancel-upload-btn" id="btnCancelPhoto" title="Cancel selection">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="action-btn btn-primary full-width-btn">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Add Skill
+            </button>
+
+        </form>
+    </div>
 </div>
-<br>
-<a href="/dashboard">Back to Dashboard</a>
 
-</body>
-</html>
+<script>
+ document.addEventListener("DOMContentLoaded", function() {
+        const fileInput = document.getElementById('photoInput');
+        const uploaderBox = document.getElementById('photoUploaderBox');
+        const uploaderText = document.getElementById('uploaderText');
+        const cancelButton = document.getElementById('btnCancelPhoto');
+
+        // Function when a file is selected
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                // Change text and state of the box
+                uploaderText.textContent = "File selected: " + this.files[0].name;
+                uploaderBox.classList.add('photo-selected');
+            } else {
+                resetUploaderBox();
+            }
+        });
+
+        // Function for the Cancel Button (
+        cancelButton.addEventListener('click', function(e) {
+            e.stopPropagation(); 
+            resetUploaderBox();
+        });
+
+        // Small utility to reset the box to default state
+        function resetUploaderBox() {
+            fileInput.value = ""; 
+            uploaderText.textContent = "Drag & drop or click to upload service photo";
+            uploaderBox.classList.remove('photo-selected');
+        }
+    });
+ </script>
+
+{% endblock %}

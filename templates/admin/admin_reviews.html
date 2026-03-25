@@ -19,15 +19,17 @@
                placeholder="Provider"
                value="{{ request.args.get('provider','') }}">
 
-        <input type="number" name="rating"
+        <input type="number" step="0.1" name="rating"
                placeholder="Rating"
                value="{{ request.args.get('rating','') }}">
 
-        <button type="submit" class="btn btn-primary">Search</button>
-        <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
-
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ request.path }}" class="btn btn-danger">Clear All</a>
+        </div>
     </div>
 </form>
+{% if reviews %}
 
 <table class="admin-table">
     <thead>
@@ -54,16 +56,15 @@
 </table>
 
 <div class="pagination-container">
-
     <div class="pagination-left">
         {% if page > 1 %}
-        <a href="?page={{page-1}}" class="page-link">Prev</a>
+        <a href="?page={{page-1}}&user={{ request.args.get('user','') }}&skill={{ request.args.get('skill','') }}&provider={{ request.args.get('provider','') }}&rating={{ request.args.get('rating','') }}" class="page-link">Prev</a>
         {% endif %}
     </div>
 
     <div class="pagination-center">
         {% for p in range(1,total_pages+1) %}
-        <a href="?page={{p}}"
+        <a href="?page={{p}}&user={{ request.args.get('user','') }}&skill={{ request.args.get('skill','') }}&provider={{ request.args.get('provider','') }}&rating={{ request.args.get('rating','') }}"
            class="page-link {% if p==page %}active{% endif %}">
            {{p}}
         </a>
@@ -72,11 +73,19 @@
 
     <div class="pagination-right">
         {% if page < total_pages %}
-        <a href="?page={{page+1}}" class="page-link">Next</a>
+        <a href="?page={{page+1}}&user={{ request.args.get('user','') }}&skill={{ request.args.get('skill','') }}&provider={{ request.args.get('provider','') }}&rating={{ request.args.get('rating','') }}" class="page-link">Next</a>
         {% endif %}
     </div>
-
 </div>
+
+{% else %}
+
+    <div class="admin-empty-state">
+        <i class="fa-solid fa-comment-slash"></i>
+        <h3>No Reviews Found</h3>
+        <p>We couldn't find any feedback matching your search.</p>
+    </div>
+{% endif %}
 
 <div class="dashboard-btn">
 <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">

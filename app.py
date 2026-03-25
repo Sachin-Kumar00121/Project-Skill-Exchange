@@ -117,7 +117,6 @@ def admin_dashboard():
         total_revenue=revenue
     )
 
-
 #Admin Manage users route
 @app.route("/admin-users")
 def admin_users():
@@ -211,6 +210,56 @@ def admin_delete_user(user_id):
     db.commit()
 
     return redirect("/admin-users")
+
+
+# Admin Toggle Provider Block/Unblock Route
+@app.route("/admin-toggle-provider/<int:provider_id>")
+def admin_toggle_provider(provider_id):
+    if session.get("role") != "admin":
+        return redirect("/login")
+
+    reason = request.args.get("reason", "Policy Violation")
+
+    cursor.execute("SELECT status FROM users WHERE user_id=%s", (provider_id,))
+    user = cursor.fetchone()
+
+    if user["status"] == "active":
+        cursor.execute("""
+            UPDATE users
+            SET status='blocked',
+                block_reason=%s,
+                blocked_at=%s
+            WHERE user_id=%s
+        """, (reason, datetime.now(), provider_id))
+    else:
+        cursor.execute("""
+            UPDATE users
+            SET status='active',
+                block_reason=NULL,
+                blocked_at=NULL
+            WHERE user_id=%s
+        """, (provider_id,))
+
+    db.commit()
+    return redirect(request.referrer)
+
+# Admin Delete Provider Route 
+@app.route("/admin-delete-provider/<int:provider_id>")
+def admin_delete_provider(provider_id):
+    if session.get("role") != "admin":
+        return redirect("/login")
+
+    # 1. Delete provider bookings
+    cursor.execute("DELETE FROM bookings WHERE provider_id=%s", (provider_id,))
+    # 2. Delete provider reviews
+    cursor.execute("DELETE FROM feedback WHERE provider_id=%s", (provider_id,))
+    # 3. Delete Provider skills
+    cursor.execute("DELETE FROM skills WHERE provider_id=%s", (provider_id,))
+    # 4. Now delete Provider
+    cursor.execute("DELETE FROM users WHERE user_id=%s", (provider_id,))
+
+    db.commit()
+    return redirect("/admin-providers")
 
 
 # Admin Manage Providers Route 
@@ -516,17 +565,21 @@ def home():
     LIMIT 3
     """)
     trending_skills = cursor.fetchall()
-
-    # CATEGORY BASED
+ 
+    # CATEGORY BASED (FIXED: Added Provider Name)
+  
     cursor.execute("SELECT DISTINCT category FROM skills LIMIT 3")
     categories = cursor.fetchall()
 
     category_skills = []
 
     for cat in categories:
+        # JOIN users table 
         cursor.execute("""
-        SELECT * FROM skills 
-        WHERE category=%s 
+        SELECT s.*, u.name as provider_name 
+        FROM skills s
+        JOIN users u ON s.provider_id = u.user_id
+        WHERE s.category=%s 
         LIMIT 4
         """, (cat['category'],))
 
@@ -837,18 +890,14 @@ def logout():
     session.clear()
     return redirect("/login")
 
-
-# Add Skill Route
+# add Skill Route
 @app.route("/add-skill", methods=["GET", "POST"])
 def add_skill():
-
     if "user_id" not in session:
         return redirect("/login")
 
     if request.method == "POST":
-
-        provider_id = session["user_id"]  
-
+        provider_id = session["user_id"]
         skill_name = request.form["skill_name"].strip()
         category = request.form["category"]
         description = request.form["description"]
@@ -858,10 +907,14 @@ def add_skill():
 
         # Safe Photo Handling
         photo = request.files.get("photo")
-
         if photo and photo.filename != "":
+           
+            upload_dir = os.path.join('static', 'uploads', 'skill_pics')
+            
+            if not os.path.exists(upload_dir):
+                os.makedirs(upload_dir)
             photo_filename = photo.filename
-            photo.save("static/uploads/" + photo_filename)
+            photo.save(os.path.join(upload_dir, photo_filename))
         else:
             photo_filename = None
 
@@ -881,11 +934,9 @@ def add_skill():
         """, (provider_id, skill_name, category, description, price, unit, experience, photo_filename))
 
         db.commit()
-
         return render_template("add_skill.html", success="Skill Added Successfully")
 
     return render_template("add_skill.html")
-
 
 # View My Skills Route
 @app.route("/my-skills")
@@ -920,32 +971,55 @@ def delete_skill(skill_id):
     return redirect("/my-skills")
 
 
-# Edit Skill Route
 @app.route("/edit-skill/<int:skill_id>", methods=["GET", "POST"])
 def edit_skill(skill_id):
     if "user_id" not in session:
         return redirect("/login")
 
+    provider_id = session["user_id"]
+
     if request.method == "GET":
         cursor.execute(
             "SELECT * FROM skills WHERE skill_id=%s AND provider_id=%s",
-            (skill_id, session["user_id"])
+            (skill_id, provider_id)
         )
         skill = cursor.fetchone()
+        if not skill:
+            return redirect("/my-skills")
         return render_template("edit_skill.html", skill=skill)
 
-    skill_name = request.form["skill_name"]
+    # Handling POST Request 
+    skill_name = request.form["skill_name"].strip()
     category = request.form["category"]
+    price = request.form["price"]
+    unit = request.form["unit"]
+    experience = request.form["experience"]
     description = request.form["description"]
 
-    cursor.execute(
-        "UPDATE skills SET skill_name=%s, category=%s, description=%s WHERE skill_id=%s AND provider_id=%s",
-        (skill_name, category, description, skill_id, session["user_id"])
-    )
+    photo = request.files.get("photo")
+    if photo and photo.filename != "":
+        upload_dir = os.path.join('static', 'uploads', 'skill_pics')
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+            
+        photo_filename = photo.filename
+        
+        photo.save(os.path.join(upload_dir, photo_filename))
+        
+        cursor.execute("""
+            UPDATE skills 
+            SET skill_name=%s, category=%s, price=%s, unit=%s, experience=%s, description=%s, photo=%s 
+            WHERE skill_id=%s AND provider_id=%s
+        """, (skill_name, category, price, unit, experience, description, photo_filename, skill_id, provider_id))
+    else:
+        cursor.execute("""
+            UPDATE skills 
+            SET skill_name=%s, category=%s, price=%s, unit=%s, experience=%s, description=%s 
+            WHERE skill_id=%s AND provider_id=%s
+        """, (skill_name, category, price, unit, experience, description, skill_id, provider_id))
+
     db.commit()
-
     return redirect("/my-skills")
-
 
 # View All Skills 
 @app.route("/all-skills")
@@ -1152,10 +1226,10 @@ def my_bookings():
 
     return render_template("my_bookings.html", bookings=bookings)
 
-# View Bookings for Providers route
+
+#  VIEW BOOKINGS FOR PROVIDERS 
 @app.route("/provider-bookings")
 def provider_bookings():
-
     if 'user_id' not in session:
         return redirect("/login")
 
@@ -1168,14 +1242,13 @@ def provider_bookings():
         JOIN skills s ON b.skill_id = s.skill_id
         JOIN users u ON b.user_id = u.user_id
         WHERE b.provider_id=%s
+        ORDER BY b.booking_id DESC
     """, (provider_id,))
 
     bookings = cursor.fetchall()
 
     #  Date & Time Convert 
     for b in bookings:
-
-        # Date Convert
         if b.get("service_date"):
             if isinstance(b["service_date"], date):
                 b["display_date"] = b["service_date"].strftime("%d %b %Y")
@@ -1183,13 +1256,23 @@ def provider_bookings():
                 dt_obj = datetime.strptime(str(b["service_date"]), "%Y-%m-%d")
                 b["display_date"] = dt_obj.strftime("%d %b %Y")
 
-        # Time Convert
         if b.get("service_time"):
             if isinstance(b["service_time"], time):
                 b["display_time"] = b["service_time"].strftime("%I:%M %p")
             else:
                 time_obj = datetime.strptime(str(b["service_time"]), "%H:%M:%S")
                 b["display_time"] = time_obj.strftime("%I:%M %p")
+
+    return render_template("provider_bookings.html", bookings=bookings)
+
+
+# VIEW REVIEWS FOR PROVIDERS 
+@app.route("/provider-reviews")
+def provider_reviews():
+    if 'user_id' not in session:
+        return redirect("/login")
+
+    provider_id = session['user_id']
 
     #  Average Rating
     cursor.execute("""
@@ -1213,13 +1296,10 @@ def provider_bookings():
         WHERE f.provider_id=%s
         ORDER BY f.created_at DESC
     """, (provider_id,))
-
     reviews = cursor.fetchall()
 
     # Reviews Date & Time Convert 
     for r in reviews:
-
-        # Booking Date
         if r.get("service_date"):
             if isinstance(r["service_date"], date):
                 r["display_date"] = r["service_date"].strftime("%d %b %Y")
@@ -1227,7 +1307,6 @@ def provider_bookings():
                 dt_obj = datetime.strptime(str(r["service_date"]), "%Y-%m-%d")
                 r["display_date"] = dt_obj.strftime("%d %b %Y")
 
-        # Booking Time
         if r.get("service_time"):
             if isinstance(r["service_time"], time):
                 r["display_time"] = r["service_time"].strftime("%I:%M %p")
@@ -1235,7 +1314,6 @@ def provider_bookings():
                 time_obj = datetime.strptime(str(r["service_time"]), "%H:%M:%S")
                 r["display_time"] = time_obj.strftime("%I:%M %p")
 
-        # Feedback Created Time
         if r.get("created_at"):
             dt_obj = r["created_at"]
             if isinstance(dt_obj, datetime):
@@ -1244,12 +1322,7 @@ def provider_bookings():
                 dt_obj = datetime.strptime(str(dt_obj), "%Y-%m-%d %H:%M:%S")
                 r["display_created_at"] = dt_obj.strftime("%d %b %Y • %I:%M %p").lstrip("0")
 
-    return render_template(
-        "provider_bookings.html",
-        bookings=bookings,
-        rating_data=rating_data,
-        reviews=reviews
-    )
+    return render_template("provider_reviews.html", rating_data=rating_data, reviews=reviews)
 
 # Update Booking Status (Accept/Reject) for Providers route
 @app.route("/update-booking/<int:booking_id>/<status>", methods=["POST"])

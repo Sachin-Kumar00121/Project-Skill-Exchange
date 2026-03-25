@@ -301,5 +301,4 @@ function checkMatch() {
             formToSubmit.submit();
         }
     });
-
-
+  

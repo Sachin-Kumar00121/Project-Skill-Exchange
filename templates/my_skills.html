@@ -1,36 +1,172 @@
-<h2>My Skills</h2>
+{% extends "base.html" %}
 
-{% for s in skills %}
+{% block title %}My Skills - SkillX{% endblock %}
 
-<div style="border-bottom:1px solid #ccc; padding:15px 0;">
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
 
-    <h3>{{ s.skill_name }} <br>
-        ({{ s.category }})</h3>
 
-    <p>
-        <strong>Experience:</strong> {{ s.experience }} Years <br>
-        <strong>Price:</strong> ₹{{ s.price }} {{ s.unit }} <br>
-        <strong>Description:</strong> {{ s.description }}
-    </p>
+<div class="page-wrapper app-container-large">
 
-    {% if s.photo %}
-        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}"
-             width="150"
-             style="border-radius:8px; margin-top:10px;">
+    <div class="page-header-container">
+        <div class="page-header-text">
+            <h2><i class="fa-solid fa-briefcase icon-cyan"></i> My Services</h2>
+            <p>Manage the skills and services you are offering to clients.</p>
+        </div>
+        <div class="header-back-btn">
+            <a href="/add-skill" class="action-btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Add New Service
+            </a>
+        </div>
+    </div>
+
+    <div class="filter-section-wrapper">
+        <div class="search-input-group">
+            <i class="fa-solid fa-search search-icon"></i>
+            <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search your services by name or category...">
+            
+            <button type="button" class="btn-clear-search" id="btnClearSearch" onclick="clearSearch()" title="Clear Search">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    {% if skills %}
+    <div class="cards-grid" id="skillsGrid">
+        
+        {% for s in skills %}
+        <div class="modern-card skill-item-card" style="padding: 0; overflow: hidden;">
+            
+            <div class="card-img-container" style="height: 180px;">
+                {% if s.photo %}
+                    <img src="{{ url_for('static', filename='uploads/skill_pics/' + s.photo) }}" class="card-img-top" alt="Skill Photo">
+                {% else %}
+                    <div class="card-img-placeholder">
+                        <i class="fa-solid fa-image"></i>
+                    </div>
+                {% endif %}
+                
+                <div style="position: absolute; top: 15px; right: 15px;">
+                    <span class="status-badge badge-accepted" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                        <i class="fa-solid fa-circle-check"></i> Active
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body-content" style="padding: 20px;">
+                <div class="skill-cat-label"><i class="fa-solid fa-tags"></i> {{ s.category }}</div>
+                <h3 class="skill-card-title">{{ s.skill_name }}</h3>
+                
+                <div class="info-boxes" style="margin-top: 15px;">
+                    <div class="info-box price-box">
+                        <i class="fa-solid fa-indian-rupee-sign"></i> 
+                        {{ s.price }} / {{ s.unit }}
+                    </div>
+                    <div class="info-box">
+                        <i class="fa-solid fa-user-tie"></i> 
+                        {{ s.experience }} Yrs Exp.
+                    </div>
+                </div>
+
+                <div class="skill-desc-txt" style="margin-top: 15px;">
+                    {{ s.description[:100] }}{% if s.description|length > 100 %}...{% endif %}
+                </div>
+                </div>
+
+                <div class="card-footer-action">
+                
+                   <a href="/edit-skill/{{ s.skill_id }}" class="action-btn btn-solid-cyan">
+                     <i class="fa-solid fa-pen-to-square"></i> Edit
+                   </a>
+                
+                  <button type="button" class="action-btn btn-solid-red"
+                   onclick="openDeleteModal('{{ s.skill_id }}', '{{ s.skill_name }}')">
+                    <i class="fa-solid fa-trash"></i> Delete
+                  </button>
+
+                </div>
+            
+            </div>
+        {% endfor %}
+
+    </div>
+    {% else %}
+    
+    <div class="empty-state">
+        <i class="fa-solid fa-box-open"></i>
+        <h3>No Services Added Yet</h3>
+        <p>You haven't listed any skills. 
+            Click the button above to add your first service and start earning!</p>
+        <a href="/add-skill" class="action-btn btn-primary" style="margin-top: 15px;">
+            <i class="fa-solid fa-plus"></i> Add Your First Service
+        </a>
+    </div>
+    
     {% endif %}
-
-    <br><br>
-
-    <a href="/edit-skill/{{ s.skill_id }}">Edit</a> |
-    <a href="/delete-skill/{{ s.skill_id }}">Delete</a>
 
 </div>
 
-{% endfor %}
-<br>
+<div class="delete-modal-overlay" id="deleteSkillModal">
+    <div class="delete-modal-box">
+        <i class="fa-solid fa-circle-exclamation delete-modal-icon"></i>
+        <h3 class="delete-modal-title">Delete Service?</h3>
+        <p class="delete-modal-text">Are you sure you want to delete 
+            "<strong id="deleteSkillName"></strong>"? This action cannot be undone.</p>
+        
+        <div class="delete-modal-actions">
+            <a href="#" id="deleteConfirmBtn" class="action-btn btn-danger flex-btn flex-center-btn">Yes, Delete</a>
+            <button class="action-btn btn-secondary flex-btn flex-center-btn" onclick="closeDeleteModal()">Cancel</button>
+        </div>
+    </div>
+</div>
 
-<a href="/add-skill">Add New Skill</a>
-<br><br> 
+<script>
+    // Combined Search & Clear Logic
+    function handleSearch() {
+        const input = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('btnClearSearch');
+        if (!input || !clearBtn) return; 
 
-<a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back</a>
-<br><br>
+        const filter = input.value.toLowerCase();
+        const cards = document.getElementsByClassName('skill-item-card');
+
+        // Toggle 'X' visibility
+        if (filter.length > 0) {
+            clearBtn.style.visibility = 'visible';
+            clearBtn.style.opacity = '1';
+        } else {
+            clearBtn.style.visibility = 'hidden';
+            clearBtn.style.opacity = '0';
+        }
+
+        // Filter cards
+        for (let i = 0; i < cards.length; i++) {
+            let cardText = cards[i].innerText.toLowerCase();
+            cards[i].style.display = cardText.includes(filter) ? "flex" : "none";
+        }
+    }
+
+    // Clear Search Field
+    function clearSearch() {
+        const input = document.getElementById('searchInput');
+        if (!input) return;
+
+        input.value = '';
+        handleSearch(); 
+        input.focus();
+    }
+
+    // Delete Modal Logic
+    function openDeleteModal(skillId, skillName) {
+        document.getElementById('deleteSkillName').innerText = skillName;
+        document.getElementById('deleteConfirmBtn').href = "/delete-skill/" + skillId; 
+        document.getElementById('deleteSkillModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteSkillModal').style.display = 'none';
+    }
+</script>
+
+{% endblock %}

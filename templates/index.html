@@ -163,6 +163,7 @@ View All Services →
 {% for skill in cat.skills %}
 <div class="skill-card zoom-in">
 <h3 class="reveal">{{ skill.skill_name }}</h3>
+<p class="fade-left">Provider : {{ skill.provider_name }}</p>
 <p class="fade-left">₹{{ skill.price }}</p>
 <button class="zoom-in" onclick="goLogin()">Book Now</button>
 </div>

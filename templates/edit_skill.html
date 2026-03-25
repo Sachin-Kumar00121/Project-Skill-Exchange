@@ -1,8 +1,133 @@
-<h2>Edit Skill</h2>
+{% extends "base.html" %}
 
-<form method="POST">
-<input type="text" name="skill_name" value="{{ skill.skill_name }}" required><br><br>
-<input type="text" name="category" value="{{ skill.category }}" required><br><br>
-<textarea name="description" required>{{ skill.description }}</textarea><br><br>
-<button type="submit">Update Skill</button>
-</form>
+{% block title %}Edit Service - SkillX{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+
+<div class="page-wrapper app-container-mid">
+
+    <div class="page-header-container">
+        <div class="page-header-text">
+            <h2><i class="fa-solid fa-pen-to-square icon-cyan"></i> Edit Service Details</h2>
+            <p>Update the information, pricing, or photo for your service.</p>
+        </div>
+        <div class="header-back-btn">
+            <a href="/my-skills" class="action-btn btn-outline">
+                <i class="fa-solid fa-arrow-left"></i> Cancel Edit
+            </a>
+        </div>
+    </div>
+
+    <div class="modern-card">
+        <form method="POST" enctype="multipart/form-data">
+
+            <div class="form-grid mb-20">
+                <div class="input-wrap">
+                    <label>Skill / Service Name</label>
+                    <input type="text" name="skill_name" value="{{ skill.skill_name }}" required>
+                </div>
+
+                <div class="input-wrap">
+                    <label>Category</label>
+                    <input type="text" name="category" value="{{ skill.category }}" required>
+                </div>
+
+                <div class="input-wrap">
+                    <label>Base Price (₹)</label>
+                    <input type="number" name="price" value="{{ skill.price }}" required>
+                </div>
+
+                <div class="input-wrap">
+                    <label>Pricing Unit</label>
+                    <input type="text" name="unit" value="{{ skill.unit }}" required>
+                </div>
+            </div>
+
+            <div class="input-wrap mb-20">
+                <label>Years of Experience</label>
+                <input type="number" name="experience" value="{{ skill.experience }}" required>
+            </div>
+
+            <div class="input-wrap mb-20">
+                <label>Description</label>
+                <textarea name="description" rows="4" class="form-textarea" required>{{ skill.description }}</textarea>
+            </div>
+
+            <div class="input-wrap mb-25">
+                <label>Service Photo (Leave blank to keep current photo)</label>
+                
+                <div class="skill-photo-uploader-box" id="photoUploaderBox">
+                    <input type="file" name="photo" accept="image/*" class="clean-file-input" id="photoInput">
+                    
+                    <div class="uploader-main-content">
+                        {% if skill.photo %}
+                            <i class="fa-solid fa-image" style="color: #22c55e;"></i>
+                            <span id="uploaderText" style="color: #16a34a; font-weight: bold;">Current: {{ skill.photo }}</span>
+                            <span class="file-specs">Click or drag here to upload a NEW photo</span>
+                        {% else %}
+                            <i class="fa-solid fa-camera-rotate"></i>
+                            <span id="uploaderText">Drag & drop or click to upload service photo</span>
+                            <span class="file-specs">Accepted: JPG, PNG, WEBP. Max 5MB.</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="button" class="cancel-upload-btn" id="btnCancelPhoto" title="Cancel selection">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 15px; margin-top: 10px;">
+                <button type="submit" class="action-btn btn-primary" style="flex: 2; justify-content: center;">
+                    <i class="fa-solid fa-floppy-disk"></i> Update Skill
+                </button>
+
+                <a href="/my-skills" class="action-btn btn-secondary" style="flex: 1; justify-content: center;">Discard Changes</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fileInput = document.getElementById('photoInput');
+        const uploaderBox = document.getElementById('photoUploaderBox');
+        const uploaderText = document.getElementById('uploaderText');
+        const cancelButton = document.getElementById('btnCancelPhoto');
+        
+        const hasOriginalPhoto = "{{ 'true' if skill.photo else 'false' }}" === 'true';
+        const originalText = uploaderText.innerHTML;
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                uploaderText.innerHTML = "New File: <strong>" + this.files[0].name + "</strong>";
+                uploaderBox.classList.add('photo-selected');
+                document.querySelector('.uploader-main-content i').className = "fa-solid fa-check-circle";
+            } else {
+                resetUploaderBox();
+            }
+        });
+
+        cancelButton.addEventListener('click', function(e) {
+            e.stopPropagation(); 
+            resetUploaderBox();
+        });
+
+        function resetUploaderBox() {
+            fileInput.value = ""; 
+            uploaderText.innerHTML = originalText;
+            uploaderBox.classList.remove('photo-selected');
+            
+            
+            if (hasOriginalPhoto) {
+                document.querySelector('.uploader-main-content i').className = "fa-solid fa-image";
+            } else {
+                document.querySelector('.uploader-main-content i').className = "fa-solid fa-camera-rotate";
+            }
+        }
+    });
+</script>
+{% endblock %}

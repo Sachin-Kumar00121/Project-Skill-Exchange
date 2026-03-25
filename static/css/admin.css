@@ -176,8 +176,7 @@ body[data-theme="dark"] .admin-table tbody tr:hover {
     background: #0f172a;
 }
 
-/* 
-   FILTER BAR MODERN
+/* FILTER BAR MODERN 
  */
 
 .filter-bar {
@@ -185,6 +184,7 @@ body[data-theme="dark"] .admin-table tbody tr:hover {
     gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 20px;
+    align-items: center; 
 }
 
 .filter-bar input,
@@ -203,15 +203,20 @@ body[data-theme="dark"] .admin-table tbody tr:hover {
     outline: none;
 }
 
-/* Dark */
 
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Dark Mode */
 body[data-theme="dark"] .filter-bar input,
 body[data-theme="dark"] .filter-bar select {
     background: #1e293b;
     border: 1px solid #334155;
     color: white;
 }
-
 /* 
    BUTTON UNIFORM SIZE
 */
@@ -459,9 +464,9 @@ body[data-theme="dark"] .password-card {
     width: 100%;
 }
 
-/* =========================
+/* 
    CUSTOM CONFIRM MODAL
-========================= */
+ */
 
 .confirm-modal {
     position: fixed;
@@ -562,4 +567,50 @@ justify-content:center;
 
 .toggle-icon:hover {
     color: #00d4ff;
+}
+
+/*
+   EMPTY SEARCH STATE (ADMIN PANEL)
+ */
+.admin-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 2px dashed #e2e8f0;
+    margin-top: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.admin-empty-state i {
+    font-size: 50px;
+    color: #94a3b8;
+    margin-bottom: 15px;
+}
+
+.admin-empty-state h3 {
+    font-size: 22px;
+    color: #0f172a;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.admin-empty-state p {
+    color: #64748b;
+    font-size: 15px;
+    margin: 0;
+}
+
+/* Dark Mode Overrides */
+body[data-theme="dark"] .admin-empty-state {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+body[data-theme="dark"] .admin-empty-state h3 {
+    color: #f8fafc;
+}
+
+body[data-theme="dark"] .admin-empty-state p {
+    color: #94a3b8;
 }

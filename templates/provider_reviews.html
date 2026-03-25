@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}My Reviews - SkillX{% endblock %}
+{% block content %}
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
+<div class="page-wrapper app-container-large">
+
+    <div class="page-header-container">
+        <div class="page-header-text">
+            <h2><i class="fa-solid fa-star icon-cyan"></i> My Ratings & Feedback</h2>
+            <p>See what clients are saying about your quality of work.</p>
+        </div>
+    </div>
+
+    <div class="provider-stats-header">
+        <div class="stat-modern-box">
+            <div class="stat-icon-large"><i class="fa-solid fa-star-half-stroke"></i></div>
+            <div class="stat-text">
+                <h3>{{ rating_data.avg_rating | round(1) if rating_data.avg_rating else '0.0' }}</h3>
+                <p>Average Rating</p>
+            </div>
+        </div>
+        <div class="stat-modern-box">
+            <div class="stat-icon-large"><i class="fa-solid fa-comments"></i></div>
+            <div class="stat-text">
+                <h3>{{ rating_data.total_reviews if rating_data.total_reviews else 0 }}</h3>
+                <p>Total Reviews</p>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="margin-bottom: 25px; color: #0f172a;">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+         Recent Client Feedback
+    </h3>
+
+    {% if reviews %}
+    <div class="app-cards-grid">
+        {% for r in reviews %}
+        <div class="modern-service-card" style="padding: 0; overflow: hidden;">
+            
+            <div class="card-top-section" style="padding: 20px;">
+                
+                <div class="card-title-badge-flex" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
+                    <div>
+                        <h3 class="skill-title-txt" style="margin: 0;">{{ r.skill_name }}</h3>
+                        <p class="detail-text-row" style="margin: 5px 0 0 0;">
+                            <i class="fa-solid fa-user"></i> 
+                            Client: <strong>{{ r.user_name }}</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="status-badge" style="font-size: 14px; background-color:#fffbeb; color:#d97706; border-color:#fde68a;">
+                        <i class="fa-solid fa-star"></i> {{ r.rating }} / 5.0
+                    </div>
+                </div>
+
+                <div class="review-feedback-bubble">
+                    "{{ r.comment }}"
+                </div>
+
+                <div style="font-size: 13px; color: #94a3b8; display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #e2e8f0;">
+                    <span><i class="fa-regular fa-calendar-check" style="margin-right: 5px;">
+                    </i> Serviced: {{ r.display_date }}</span>
+                    
+                    <span><i class="fa-solid fa-pen" style="margin-right: 5px;">
+                    </i> Reviewed: {{ r.display_created_at }}</span>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% else %}
+    <div class="centered-empty-state" style="grid-column: 1 / -1; margin-top: 50px;">
+        <i class="fa-solid fa-comment-slash" style="font-size: 60px;"></i>
+        <h3 style="margin-top:20px;">No Reviews Yet</h3>
+        <p>Complete some bookings with great service to start receiving feedback from clients!</p>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

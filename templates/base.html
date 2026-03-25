@@ -7,10 +7,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/member.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+  
 </head>
 
 <body data-theme="light">
 
+{% if session.get('user_id') %}
 <div class="sidebar" id="appSidebar">
     <div class="sidebar-header">
         <h2 class="logo">⚡ SkillX</h2>
@@ -24,7 +26,7 @@
             </a>
         </li>
 
-        {% if session.get('role') == 'provider' %}
+       {% if session.get('role') == 'provider' %}
             <li>
                 <a href="/add-skill" class="{% if request.path == '/add-skill' %}active{% endif %}">
                     <i class="fa-solid fa-plus-circle"></i> <span>Add Skill</span>
@@ -37,7 +39,13 @@
             </li>
             <li>
                 <a href="/provider-bookings" class="{% if request.path == '/provider-bookings' %}active{% endif %}">
-                    <i class="fa-solid fa-briefcase"></i> <span>My bookings</span>
+                    <i class="fa-solid fa-briefcase"></i> <span>My Bookings</span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="/provider-reviews" class="{% if request.path == '/provider-reviews' %}active{% endif %}">
+                    <i class="fa-solid fa-star"></i> <span>My Reviews</span>
                 </a>
             </li>
         {% else %}
@@ -69,8 +77,11 @@
         </li>
     </ul>
 </div>
+{% endif %}
 
-<div class="main-content" id="appMainContent">
+<div class="main-content {% if not session.get('user_id') %}full-width-layout{% endif %}" id="appMainContent">
+    
+    {% if session.get('user_id') %}
     <div class="topbar">
         
         <div class="top-left-group">
@@ -163,6 +174,31 @@
             </div>
         </div>
     </div>
+    
+{% else %}
+    <div class="guest-header">
+        <h2 class="guest-logo"><i class="fa-solid fa-bolt"></i> SkillX</h2>
+        
+        <div class="guest-right-actions">
+            
+            <button id="guestThemeToggle" class="guest-theme-btn" title="Toggle Dark/Light Mode">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+
+            <div class="guest-dropdown-wrapper">
+                <button class="guest-dropdown-btn" id="guestDropdownBtn">
+                    <i class="fa-solid fa-user-circle"></i> Account <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                
+                <div class="guest-dropdown-menu" id="guestDropdownMenu">
+                    <a href="/login"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</a>
+                    <a href="/login#signup"><i class="fa-solid fa-user-plus"></i> Register</a>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    {% endif %}
 
     <div class="content-area">
         {% block content %}{% endblock %}
@@ -170,6 +206,52 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- 1. Dropdown Logic ---
+        const guestBtn = document.getElementById('guestDropdownBtn');
+        const guestMenu = document.getElementById('guestDropdownMenu');
+        
+        if(guestBtn && guestMenu) {
+            guestBtn.addEventListener('click', function(e) {
+                e.stopPropagation(); 
+                guestMenu.classList.toggle('show');
+            });
+            
+            document.addEventListener('click', function(e) {
+                if(!guestMenu.contains(e.target) && !guestBtn.contains(e.target)) {
+                    guestMenu.classList.remove('show');
+                }
+            });
+        }
+
+        // --- 2. Guest Theme Toggle Logic ---
+        const guestThemeBtn = document.getElementById('guestThemeToggle');
+        const body = document.body;
+        
+        if (guestThemeBtn) {
+            // Check local storage for saved theme
+            if (localStorage.getItem('theme') === 'dark') {
+                body.setAttribute('data-theme', 'dark');
+                guestThemeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            }
+
+            guestThemeBtn.addEventListener('click', () => {
+                if (body.getAttribute('data-theme') === 'dark') {
+                    body.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                    guestThemeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+                } else {
+                    body.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    guestThemeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+                }
+            });
+        }
+    });
+</script>
 
 </body>
 </html>

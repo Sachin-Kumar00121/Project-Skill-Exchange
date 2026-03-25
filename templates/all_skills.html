@@ -55,7 +55,7 @@
                 
                 <div class="card-img-container">
                     {% if s.photo %}
-                        <img src="{{ url_for('static', filename='uploads/' + s.photo) }}" class="card-img-top" alt="Skill Image">
+                        <img src="{{ url_for('static', filename='uploads/skill_pics/' + s.photo) }}" class="card-img-top" alt="Skill Image">
                     {% else %}
                         <div class="card-img-placeholder">
                             <i class="fa-solid fa-toolbox"></i>
