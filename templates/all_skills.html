@@ -55,7 +55,8 @@
                 
                 <div class="card-img-container">
                     {% if s.photo %}
-                        <img src="{{ url_for('static', filename='uploads/skill_pics/' + s.photo) }}" class="card-img-top" alt="Skill Image">
+                        <img src="{{ url_for('static', filename='uploads/skill_pics/' + s.photo) }}" 
+                        class="card-img-top clickable-img" alt="Skill Image" onclick="openLightbox(this.src)">
                     {% else %}
                         <div class="card-img-placeholder">
                             <i class="fa-solid fa-toolbox"></i>
@@ -65,6 +66,16 @@
                     {% if s.avg_rating and s.avg_rating >= 4.5 %}
                         <span class="top-rated-badge"><i class="fa-solid fa-trophy"></i> Top Rated</span>
                     {% endif %}
+
+                    <div style="position: absolute; top: 15px; right: 15px; z-index: 10; pointer-events: none;">
+                        <span class="app-badge status-badge {% if s.status == 'active' or not s.status %}badge-active{% else %}badge-inactive{% endif %}">
+                            {% if s.status == 'active' or not s.status %}
+                                <i class="fa-solid fa-circle-check"></i> Active
+                            {% else %}
+                                <i class="fa-solid fa-circle-xmark"></i> Inactive
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
 
                 <div class="card-body-content">
@@ -98,9 +109,15 @@
 
                 <div class="card-footer-action">
                    {% if session.get('role', '').lower() == 'user' %}
-                        <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')" class="btn-app-primary btn-book-now">
-                            <i class="fa-solid fa-calendar-check"></i> Book Now
-                        </button>
+                        {% if s.status == 'active' or not s.status %}
+                            <button onclick="openPopup('{{ s.skill_id }}', '{{ s.price }}', '{{ s.unit }}')" class="btn-app-primary btn-book-now">
+                                <i class="fa-solid fa-calendar-check"></i> Book Now
+                            </button>
+                        {% else %}
+                            <button disabled class="btn-app-primary btn-book-now" style="background: #94a3b8; cursor: not-allowed; box-shadow: none;">
+                                <i class="fa-solid fa-ban"></i> Currently Unavailable
+                            </button>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -167,6 +184,13 @@
                 <button type="button" class="btn-cancel" onclick="closePopup()">Cancel</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div id="imageLightbox" class="lightbox-overlay" onclick="closeLightbox(event)">
+    <div class="lightbox-content">
+        <button class="lightbox-close" onclick="closeLightbox(event)" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        <img id="lightboxImg" src="" class="lightbox-img" onclick="event.stopPropagation()">
     </div>
 </div>
 

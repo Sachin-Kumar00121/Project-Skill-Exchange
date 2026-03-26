@@ -3,7 +3,7 @@
    SECTIONS:
    1. GLOBAL & UTILITIES
    2. SIDEBAR
-   3. UNIVERSAL BADGES (ANIMATIONS & CONFLICT FIXED)
+   3. UNIVERSAL BADGES 
    4. TOPBAR & DROPDOWNS
    5. DASHBOARD CARDS & RECENT ACTIVITY
    6. FORMS & INPUTS
@@ -11,8 +11,8 @@
    8. ALL SKILLS (MARKETPLACE)
    9. NOTIFICATIONS PAGE
    10. MODALS (POPUPS)
-   11. DARK MODE OVERRIDES (FIXED BADGES)
-   12. RESPONSIVE (MEDIA QUERIES)
+   11. DARK MODE OVERRIDES 
+   12. RESPONSIVE 
  */
 
 /* 
@@ -1165,7 +1165,7 @@ span,
 
 .marketplace-grid { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); 
     gap: 25px; 
 }
 
@@ -2253,3 +2253,78 @@ body[data-theme="dark"] .guest-dropdown-menu a:hover {
      background-color: #1e293b !important;
       color: #00d4ff !important; 
     }
+
+
+/* 🚨 ERROR MESSAGE STYLING */
+.alert-message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #ffcccc; 
+    border-radius: 8px;
+    background-color: #fff0f0; 
+    color: #cc0000; 
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-message strong {
+    font-weight: 700;
+}
+
+.error-icon {
+    font-size: 1.2rem;
+    color: #cc0000;
+}
+
+/* =========================================
+   🌟 NEW FEATURES: LIGHTBOX & STATUS BADGES
+   ========================================= */
+
+/* 1. White Image Badge */
+.status-badge {
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    transition: all 0.3s ease;
+}
+.badge-active { background: #22c55e !important; color: white !important; }
+.badge-inactive { background: #ef4444 !important; color: white !important; }
+.status-btn { cursor: pointer; border: none; }
+.status-btn:hover { transform: scale(1.05); }
+
+/* 2. Full-Screen Image Gallery (Lightbox) */
+.lightbox-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.9); /* Dark Blur Background */
+    z-index: 99999; 
+    justify-content: center; align-items: center;
+    backdrop-filter: blur(5px);
+}
+.lightbox-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+.lightbox-content { position: relative; max-width: 90%; max-height: 90vh; }
+.lightbox-img {
+    max-width: 100%; max-height: 90vh;
+    border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    object-fit: contain;
+}
+/* Miss-click prevention: Close button */
+.lightbox-close {
+    position: fixed; 
+    top: 25px; 
+    right: 35px;
+    color: white; 
+    font-size: 35px; 
+    cursor: pointer;
+    background: transparent; 
+    border: none; 
+    transition: 0.3s;
+    z-index: 100000;
+}
+.lightbox-close:hover { color: #ef4444; transform: scale(1.2); }
+.clickable-img { cursor: pointer; transition: filter 0.3s; }
+.clickable-img:hover { filter: brightness(0.8); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

@@ -10,6 +10,8 @@ import re
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
+from flask import flash
+mysql.connector.Error
 
 app = Flask(__name__)
 app.secret_key = "skill_exchange_secret"
@@ -890,7 +892,7 @@ def logout():
     session.clear()
     return redirect("/login")
 
-# add Skill Route
+# Add Skill Route
 @app.route("/add-skill", methods=["GET", "POST"])
 def add_skill():
     if "user_id" not in session:
@@ -962,15 +964,31 @@ def delete_skill(skill_id):
     if "user_id" not in session:
         return redirect("/login")
 
+    provider_id = session["user_id"]
+
+    
+    cursor.execute("SELECT photo FROM skills WHERE skill_id=%s AND provider_id=%s", (skill_id, provider_id))
+    skill_to_delete = cursor.fetchone()
+
+    # delete skill from db
     cursor.execute(
         "DELETE FROM skills WHERE skill_id=%s AND provider_id=%s",
-        (skill_id, session["user_id"])
+        (skill_id, provider_id)
     )
     db.commit()
 
+    # delete skill images from uploads folder
+    if skill_to_delete and skill_to_delete['photo']:
+        photo_path = os.path.join('static', 'uploads', 'skill_pics', skill_to_delete['photo'])
+        if os.path.exists(photo_path):
+            try:
+                os.remove(photo_path)
+            except Exception as e:
+                pass
+
     return redirect("/my-skills")
 
-
+# Edit Skill Route
 @app.route("/edit-skill/<int:skill_id>", methods=["GET", "POST"])
 def edit_skill(skill_id):
     if "user_id" not in session:
@@ -1002,9 +1020,20 @@ def edit_skill(skill_id):
         if not os.path.exists(upload_dir):
             os.makedirs(upload_dir)
             
+        cursor.execute("SELECT photo FROM skills WHERE skill_id=%s AND provider_id=%s", (skill_id, provider_id))
+        old_skill_data = cursor.fetchone()
+            
         photo_filename = photo.filename
-        
         photo.save(os.path.join(upload_dir, photo_filename))
+        
+        # Delete Old Pic From uploads folder
+        if old_skill_data and old_skill_data['photo']:
+            old_photo_path = os.path.join(upload_dir, old_skill_data['photo'])
+            if os.path.exists(old_photo_path):
+                try:
+                    os.remove(old_photo_path)
+                except Exception as e:
+                    pass
         
         cursor.execute("""
             UPDATE skills 
@@ -1020,6 +1049,24 @@ def edit_skill(skill_id):
 
     db.commit()
     return redirect("/my-skills")
+
+# 🟢 Toggle Skill Status (Active/Inactive) Route
+@app.route("/toggle-skill-status/<int:skill_id>", methods=["POST"])
+def toggle_skill_status(skill_id):
+    if "user_id" not in session or session.get("role") != "provider":
+        return redirect("/login")
+    
+    # चेक करें कि अभी स्टेटस क्या है
+    cursor.execute("SELECT status FROM skills WHERE skill_id=%s AND provider_id=%s", (skill_id, session["user_id"]))
+    skill = cursor.fetchone()
+    
+    if skill:
+        # अगर active है तो inactive करें, और inactive है तो active करें
+        new_status = 'inactive' if skill['status'] == 'active' else 'active'
+        cursor.execute("UPDATE skills SET status=%s WHERE skill_id=%s", (new_status, skill_id))
+        db.commit()
+        
+    return redirect(request.referrer)
 
 # View All Skills 
 @app.route("/all-skills")
@@ -1605,6 +1652,8 @@ def profile():
     cursor.execute("SELECT * FROM users WHERE user_id=%s", (session["user_id"],))
     user_info = cursor.fetchone()
     
+    error_message = None
+
     if request.method == "POST":
         name = request.form.get("name")
         email = request.form.get("email")
@@ -1612,27 +1661,66 @@ def profile():
         bio = request.form.get("bio")
         profile_pic = user_info['profile_pic']
 
+        # प्रोफाइल पिक्चर हैंडल करना
         file = request.files.get('profile_pic')
-        if file and allowed_file(file.filename):
-            filename = secure_filename(f"user_{session['user_id']}_{file.filename}")
+        if file and file.filename != '':
+            filename = f"user_{session['user_id']}_{file.filename}"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            # Delete old pic if exists
+            # पुरानी फोटो डिलीट करना
             if profile_pic and os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], profile_pic)):
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], profile_pic))
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], profile_pic))
+                except:
+                    pass
             profile_pic = filename
             session['profile_pic'] = profile_pic
 
-        cursor.execute("""
-            UPDATE users SET name=%s, email=%s, phone=%s, bio=%s, profile_pic=%s WHERE user_id=%s
-        """, (name, email, phone, bio, profile_pic, session["user_id"]))
-        db.commit()
-        
-        session['user_name'] = name 
-        return redirect("/profile")
+        # Database Error को पकड़ने के लिए try block
+        try:
+            
+            if email and email.strip() != "":
+                cursor.execute("""
+                    UPDATE users 
+                    SET name=%s, email=%s, phone=%s, bio=%s, profile_pic=%s 
+                    WHERE user_id=%s
+                """, (name, email, phone, bio, profile_pic, session["user_id"]))
+            else:
+
+                cursor.execute("""
+                    UPDATE users 
+                    SET name=%s, phone=%s, bio=%s, profile_pic=%s 
+                    WHERE user_id=%s
+                """, (name, phone, bio, profile_pic, session["user_id"]))
+                
+            db.commit()
+            
+            session['user_name'] = name 
+            return redirect("/profile")
+
+        except mysql.connector.Error as err:
+            #  Duplicate Entry (Error Code: 1062) 
+            if err.errno == 1062:
+                
+                flash('This email is already in use. Please choose another one.', 'danger')
+                
+                form_data = {
+                    'name': name,
+                    'email': email,
+                    'phone': phone,
+                    'bio': bio,
+                    'profile_pic': profile_pic
+                }
+            
+                return render_template("profile.html", user=form_data, error="duplicate_email")
+            else:
+              
+                flash('Error In Database , Please Try Again', 'warning')
+                return redirect("/profile")
     
     return render_template("profile.html", user=user_info)
 
-# 4. Public Profile Route (Stage 2 - Let users see each other)
+
+# 4. Public Profile Route 
 @app.route("/user/<int:user_id>")
 def public_profile(user_id):
     cursor.execute("SELECT user_id, name, role, email, phone, bio, profile_pic FROM users WHERE user_id=%s", (user_id,))

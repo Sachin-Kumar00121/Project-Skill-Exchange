@@ -40,17 +40,23 @@
             
             <div class="card-img-container" style="height: 180px;">
                 {% if s.photo %}
-                    <img src="{{ url_for('static', filename='uploads/skill_pics/' + s.photo) }}" class="card-img-top" alt="Skill Photo">
+                    <img src="{{ url_for('static', filename='uploads/skill_pics/' + s.photo) }}" class="card-img-top clickable-img" alt="Skill Photo" onclick="openLightbox(this.src)">
                 {% else %}
                     <div class="card-img-placeholder">
                         <i class="fa-solid fa-image"></i>
                     </div>
                 {% endif %}
                 
-                <div style="position: absolute; top: 15px; right: 15px;">
-                    <span class="status-badge badge-accepted" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                        <i class="fa-solid fa-circle-check"></i> Active
-                    </span>
+                <div style="position: absolute; top: 15px; right: 15px; z-index: 10;">
+                    <form action="/toggle-skill-status/{{ s.skill_id }}" method="POST" style="margin: 0;">
+                        <button type="submit" class="app-badge status-badge status-btn {% if s.status == 'active' or not s.status %}badge-active{% else %}badge-inactive{% endif %}" title="Click to change status">
+                            {% if s.status == 'active' or not s.status %}
+                                <i class="fa-solid fa-circle-check"></i> Active
+                            {% else %}
+                                <i class="fa-solid fa-circle-xmark"></i> Inactive
+                            {% endif %}
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -121,7 +127,27 @@
     </div>
 </div>
 
+<div id="imageLightbox" class="lightbox-overlay" onclick="closeLightbox(event)">
+    <div class="lightbox-content">
+        <button class="lightbox-close" onclick="closeLightbox(event)" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        <img id="lightboxImg" src="" class="lightbox-img" onclick="event.stopPropagation()">
+    </div>
+</div>
+
 <script>
+    // Lightbox Logic
+    function openLightbox(imgSrc) {
+        document.getElementById('lightboxImg').src = imgSrc;
+        document.getElementById('imageLightbox').classList.add('active');
+    }
+    
+    function closeLightbox(event) {
+        // Only close if clicking the background or the 'X' button
+        if(event.target.id === 'imageLightbox' || event.target.closest('.lightbox-close')) {
+            document.getElementById('imageLightbox').classList.remove('active');
+        }
+    }
+
     // Combined Search & Clear Logic
     function handleSearch() {
         const input = document.getElementById('searchInput');

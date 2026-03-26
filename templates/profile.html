@@ -8,7 +8,20 @@
         <p>Manage your account, bio, and profile picture.</p>
     </div>
 
-    <div class="card-glass" id="profile-view-section">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert-message danger">
+                    <i class="fa-solid fa-circle-exclamation error-icon"></i>
+                    <div class="message-content">
+                        <strong>Error:</strong> {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="card-glass" id="profile-view-section" {% if error %}style="display: none;"{% endif %}>
         <div class="profile-header-center">
             {% if user.profile_pic %}
                 <img src="{{ url_for('static', filename='uploads/profile_pics/' + user.profile_pic) }}" class="avatar-xl">
@@ -51,7 +64,7 @@
         </div>
     </div>
 
-    <div class="card-glass" id="profile-edit-section" style="display: none;">
+    <div class="card-glass" id="profile-edit-section" {% if not error %}style="display: none;"{% endif %}>
         <h3 class="dash-section-title edit-section-title">
             <i class="fa-solid fa-user-pen"></i>
              Edit Details
@@ -94,7 +107,7 @@
                      Save Changes
                 </button>
 
-                <button type="button" onclick="toggleEditMode()" class="btn-cancel">
+                <button type="button" onclick="window.location.href='/profile'" class="btn-cancel">
                     <i class="fa-solid fa-xmark"></i>
                      Cancel
                 </button>
@@ -109,5 +122,4 @@
     </a>
 
 </div>
-
 {% endblock %}
