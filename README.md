@@ -42,16 +42,16 @@ SkillX is a professional web application designed to connect local service provi
        venv\Scripts\activate
 
 3. **Install Requirements**
-     pip install -r requirements.txt
+    * pip install -r requirements.txt
 
 4. **Configure Database (.env)**
   * अपने प्रोजेक्ट फोल्डर में एक नई फाइल बनाएँ जिसका नाम .env रखें और उसमें अपनी MySQL डिटेल्स डालें:
 
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASS=your_mysql_password
-   DB_NAME=your_database_name
-   DB_PORT=your db port
+   * DB_HOST=localhost
+   * DB_USER=root
+   * DB_PASS=your_mysql_password
+   * DB_NAME=your_database_name
+   * DB_PORT=your db port
 
 5. **Run the Application**
    * python app.py
