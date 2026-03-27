@@ -130,22 +130,148 @@
 <div id="imageLightbox" class="lightbox-overlay" onclick="closeLightbox(event)">
     <div class="lightbox-content">
         <button class="lightbox-close" onclick="closeLightbox(event)" title="Close"><i class="fa-solid fa-xmark"></i></button>
-        <img id="lightboxImg" src="" class="lightbox-img" onclick="event.stopPropagation()">
+        <img id="lightboxImg" src="" class="lightbox-img" 
+             onmousedown="startDrag(event)" 
+             onmousemove="drag(event)" 
+             onmouseup="endDrag(event)" 
+             onmouseleave="endDrag(event)" 
+             onwheel="handleWheelZoom(event)" 
+             title="Click/Scroll to Zoom, Drag to Move">
     </div>
 </div>
 
 <script>
-    // Lightbox Logic
+    // Zoom & Pan Variables
+    let currentZoom = 1;
+    const ZOOM_SPEED = 0.15;
+    const MAX_ZOOM = 4;
+    const MIN_ZOOM = 0.5;
+
+    let isDragging = false;
+    let startX, startY;
+    let translateX = 0, translateY = 0;
+    let isMoved = false; 
+
+    // 1. Lightbox Open/Close Logic
     function openLightbox(imgSrc) {
-        document.getElementById('lightboxImg').src = imgSrc;
+        const img = document.getElementById('lightboxImg');
+        img.src = imgSrc;
+        
+        // सब कुछ रिसेट करें
+        currentZoom = 1; 
+        translateX = 0;
+        translateY = 0;
+        img.style.transition = 'none'; 
+        applyTransform();
+        
         document.getElementById('imageLightbox').classList.add('active');
+        document.body.style.overflow = "hidden"; 
     }
     
     function closeLightbox(event) {
-        // Only close if clicking the background or the 'X' button
         if(event.target.id === 'imageLightbox' || event.target.closest('.lightbox-close')) {
             document.getElementById('imageLightbox').classList.remove('active');
+            currentZoom = 1;
+            translateX = 0;
+            translateY = 0;
+            applyTransform();
+            document.body.style.overflow = "auto"; 
         }
+    }
+
+    function applyTransform() {
+        const img = document.getElementById('lightboxImg');
+        img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+        
+        
+        if (currentZoom > 1) {
+            img.style.cursor = isDragging ? "grabbing" : "grab";
+        } else {
+            img.style.cursor = "zoom-in";
+        }
+    }
+
+    // 2. माउस व्हील (Scroll) से ज़ूम
+    function handleWheelZoom(event) {
+        event.preventDefault(); 
+        event.stopPropagation();
+        
+        const img = document.getElementById('lightboxImg');
+        img.style.transition = 'transform 0.15s ease-out'; // स्मूथ ज़ूम
+
+        if (event.deltaY < 0) {
+            currentZoom += ZOOM_SPEED;
+        } else {
+            currentZoom -= ZOOM_SPEED;
+        }
+
+        currentZoom = Math.min(Math.max(MIN_ZOOM, currentZoom), MAX_ZOOM);
+        
+        
+        if (currentZoom <= 1) {
+            translateX = 0;
+            translateY = 0;
+        }
+
+        applyTransform();
+    }
+
+    // 3. Drag & Pan लॉजिक
+    function startDrag(event) {
+        event.preventDefault(); 
+        event.stopPropagation();
+        
+        isDragging = true;
+        isMoved = false;
+        
+       
+        startX = event.clientX - translateX;
+        startY = event.clientY - translateY;
+        
+        const img = document.getElementById('lightboxImg');
+        img.style.transition = 'none'; 
+        applyTransform();
+    }
+
+    function drag(event) {
+        if (!isDragging) return;
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const currentX = event.clientX;
+        const currentY = event.clientY;
+        
+        if (Math.abs(currentX - startX - translateX) > 3 || Math.abs(currentY - startY - translateY) > 3) {
+            isMoved = true;
+        }
+
+        
+        if (currentZoom > 1) {
+            translateX = currentX - startX;
+            translateY = currentY - startY;
+            applyTransform();
+        }
+    }
+
+    function endDrag(event) {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        const img = document.getElementById('lightboxImg');
+        img.style.transition = 'transform 0.2s ease-out'; 
+        
+    
+        if (!isMoved) {
+            if (currentZoom > 1) {
+                currentZoom = 1;
+                translateX = 0;
+                translateY = 0;
+            } else {
+                currentZoom = 2; 
+            }
+        }
+        
+        applyTransform();
     }
 
     // Combined Search & Clear Logic

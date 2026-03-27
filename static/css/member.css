@@ -2291,6 +2291,7 @@ body[data-theme="dark"] .guest-dropdown-menu a:hover {
 }
 .badge-active { background: #22c55e !important; color: white !important; }
 .badge-inactive { background: #ef4444 !important; color: white !important; }
+.status-badge:hover{transform: scale(1.05);cursor: default;}
 .status-btn { cursor: pointer; border: none; }
 .status-btn:hover { transform: scale(1.05); }
 
@@ -2305,11 +2306,13 @@ body[data-theme="dark"] .guest-dropdown-menu a:hover {
 }
 .lightbox-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
 .lightbox-content { position: relative; max-width: 90%; max-height: 90vh; }
+
 .lightbox-img {
     max-width: 100%; max-height: 90vh;
     border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     object-fit: contain;
 }
+
 /* Miss-click prevention: Close button */
 .lightbox-close {
     position: fixed; 

@@ -301,17 +301,3 @@ function checkMatch() {
             formToSubmit.submit();
         }
     });
-
-// Lightbox Logic For Image Section
-
-    function openLightbox(imgSrc) {
-        document.getElementById('lightboxImg').src = imgSrc;
-        document.getElementById('imageLightbox').classList.add('active');
-    }
-    
-    function closeLightbox(event) {
-        // Only close if clicking the background or the 'X' button
-        if(event.target.id === 'imageLightbox' || event.target.closest('.lightbox-close')) {
-            document.getElementById('imageLightbox').classList.remove('active');
-        }
-    }
