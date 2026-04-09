@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% block title %}Give Feedback - SkillX{% endblock %}
-
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">
 
@@ -13,7 +11,11 @@
             <p>How was the service provided?</p>
         </div>
 
-        <form method="POST">
+        <div id="formMessage" style="display: none; padding: 12px 15px;
+         border-radius: 6px; text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 14px;">
+        </div>
+
+        <form method="POST" id="ajaxForm">
             <div class="rating-section">
                 <label>Select Rating</label>
                 
@@ -24,9 +26,7 @@
                     <div class="star-box">
                         <div class="click-half rating-trigger" data-val="{{ i - 0.5 }}"></div>
                         <div class="click-full rating-trigger" data-val="{{ i }}"></div>
-                        
                         <i class="fa-solid fa-star star-gray"></i>
-                        
                         <div class="star-gold-wrap" id="star-fill-{{ i }}">
                             <i class="fa-solid fa-star star-gold"></i>
                         </div>
@@ -40,7 +40,7 @@
                 <textarea name="comment" rows="4" required placeholder="Tell us about the provider's work..." class="form-textarea"></textarea>
             </div>
 
-            <button type="submit" class="action-btn btn-primary full-width-btn">
+            <button type="submit" id="submitBtn" class="action-btn btn-primary full-width-btn">
                 <i class="fa-solid fa-paper-plane"></i> Submit Feedback
             </button>
             
@@ -61,38 +61,51 @@
             for (let i = 1; i <= 5; i++) {
                 let fillWrap = document.getElementById('star-fill-' + i);
                 if (!fillWrap) continue;
-
-                if (val >= i) {
-                    fillWrap.style.width = '100%'; 
-                } else if (val === i - 0.5) {
-                    fillWrap.style.width = '50%';  
-                } else {
-                    fillWrap.style.width = '0%';   
-                }
+                if (val >= i) { fillWrap.style.width = '100%'; } 
+                else if (val === i - 0.5) { fillWrap.style.width = '50%'; } 
+                else { fillWrap.style.width = '0%'; }
             }
         }
-
         
         document.querySelectorAll('.rating-trigger').forEach(trigger => {
             let val = parseFloat(trigger.getAttribute('data-val'));
-            
             trigger.addEventListener('click', function() {
                 finalRatingVal = val;
                 ratingInput.value = val;
                 renderStars(val);
             });
-            
-            trigger.addEventListener('mouseover', function() {
-                renderStars(val);
-            });
+            trigger.addEventListener('mouseover', function() { renderStars(val); });
         });
 
-      
         if(widgetParent) {
-            widgetParent.addEventListener('mouseout', function() {
-                renderStars(finalRatingVal);
-            });
+            widgetParent.addEventListener('mouseout', function() { renderStars(finalRatingVal); });
         }
+    });
+
+    // AJAX Form Submission
+    document.getElementById('ajaxForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const msgBox = document.getElementById('formMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+        submitBtn.disabled = true;
+
+        fetch(window.location.href, { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            msgBox.style.display = 'block';
+            if (data.success) {
+                msgBox.style.background = 'rgba(34, 197, 94, 0.1)';
+                msgBox.style.border = '1px solid #22c55e';
+                msgBox.style.color = '#0f5132';
+                msgBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + data.message;
+                submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Success!';
+                setTimeout(() => { window.location.href = "/my-bookings"; }, 1500);
+            }
+        });
     });
 </script>
 {% endblock %}

@@ -1,5 +1,7 @@
 import code
 import os
+import random
+from flask import jsonify
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 load_dotenv()
@@ -654,8 +656,12 @@ def register():
         )
 
     db.commit()
-    return redirect("/login")
-
+    
+    # ---  Success message with delay instead of instant redirect ---
+    return render_template("auth.html", 
+                           success_msg="Registration Successful! Redirecting to login...", 
+                           redirect_to="/login", 
+                           show_signup=True)
 
 #  Login (Email OR Phone)
 @app.route("/login", methods=["GET", "POST"])
@@ -691,7 +697,11 @@ def login():
 
             session.permanent = False
 
-            return redirect("/dashboard")
+            # --- Success message with delay instead of instant redirect ---
+            return render_template("auth.html", 
+                                   success_msg="Login Successful! Welcome back...", 
+                                   redirect_to="/dashboard", 
+                                   show_signup=False)
 
         else:
             return render_template("auth.html",
@@ -1006,7 +1016,6 @@ def edit_skill(skill_id):
             return redirect("/my-skills")
         return render_template("edit_skill.html", skill=skill)
 
-    # Handling POST Request 
     skill_name = request.form["skill_name"].strip()
     category = request.form["category"]
     price = request.form["price"]
@@ -1026,7 +1035,6 @@ def edit_skill(skill_id):
         photo_filename = photo.filename
         photo.save(os.path.join(upload_dir, photo_filename))
         
-        # Delete Old Pic From uploads folder
         if old_skill_data and old_skill_data['photo']:
             old_photo_path = os.path.join(upload_dir, old_skill_data['photo'])
             if os.path.exists(old_photo_path):
@@ -1048,7 +1056,10 @@ def edit_skill(skill_id):
         """, (skill_name, category, price, unit, experience, description, skill_id, provider_id))
 
     db.commit()
-    return redirect("/my-skills")
+    
+    # ---  JSON Response for AJAX ---
+    return jsonify({"success": True, "message": "Service updated successfully!"})
+
 
 # 🟢 Toggle Skill Status (Active/Inactive) Route
 @app.route("/toggle-skill-status/<int:skill_id>", methods=["POST"])
@@ -1148,12 +1159,12 @@ def book():
     minute = request.form.get("minute")
     ampm = request.form.get("ampm")
 
-    #  Convert to 24hr format for DB
+    # Convert to 24hr format for DB
     time_string = f"{hour}:{minute} {ampm}"
     time_obj = datetime.strptime(time_string, "%I:%M %p")
     service_time = time_obj.strftime("%H:%M:%S")  
 
-    #  Duplicate Check
+    # Duplicate Check
     cursor.execute("""
         SELECT * FROM bookings
         WHERE skill_id=%s AND user_id=%s AND service_date=%s AND status IN ('pending','accepted')
@@ -1173,13 +1184,23 @@ def book():
     provider_id = skill["provider_id"]
     skill_name = skill["skill_name"]
 
-    # Insert new booking
-    cursor.execute("""
-        INSERT INTO bookings (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, remark)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-    """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, request.form.get("remark")))
+    #  New Data & OTP Logic 
+    address = request.form.get("address")
+    contact_phone = request.form.get("contact_phone")
+    remark = request.form.get("remark")
+    
+    # Generate a random 4-digit OTP
+    otp_code = str(random.randint(1000, 9999))
+    # -------------------------------------
 
-    #  Send Notification to Provider
+    # Insert new booking with address, phone, and otp
+    cursor.execute("""
+        INSERT INTO bookings 
+        (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, remark, address, contact_phone, otp_code, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending')
+    """, (skill_id, user_id, provider_id, offered_price, unit, service_date, service_time, remark, address, contact_phone, otp_code))
+
+    # Send Notification to Provider
     notif_msg = f"New booking request for '{skill_name}' from {session['user_name']}."
     cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (provider_id, notif_msg))
 
@@ -1219,7 +1240,7 @@ def cancel_booking(booking_id):
     db.commit()
     return redirect("/my-bookings")
 
-# View My Bookings  for user route
+# View My Bookings for user route
 @app.route("/my-bookings")
 def my_bookings():
 
@@ -1228,10 +1249,12 @@ def my_bookings():
 
     user_id = session['user_id']
 
+    #  SQL Query 
     cursor.execute("""
         SELECT b.*, 
                s.skill_name,
-               u.name as provider_name
+               u.name as provider_name,
+               u.phone as provider_phone 
         FROM bookings b
         JOIN skills s ON b.skill_id = s.skill_id
         JOIN users u ON b.provider_id = u.user_id
@@ -1241,7 +1264,7 @@ def my_bookings():
 
     bookings = cursor.fetchall()
 
-    # Date & Time Convert
+    # Date & Time Convert 
     for b in bookings:
 
         #  DATE 
@@ -1380,10 +1403,25 @@ def update_booking(booking_id, status):
     if status not in ["accepted", "rejected", "completed"]:
         return redirect("/provider-bookings")
 
+    provider_id = session["user_id"]
+
+    # --- Profile Completion Check (Phone Number) ---
+    if status == "accepted":
+        cursor.execute("SELECT phone FROM users WHERE user_id=%s", (provider_id,))
+        provider_data = cursor.fetchone()
+        
+        # Check if phone is None, empty string, or 'Not provided'
+        phone = provider_data['phone'] if type(provider_data) is dict else provider_data[0]
+        
+        if not phone or str(phone).strip() == "" or str(phone).lower() == "not provided":
+            flash("Action Required: Please update your phone number in your Profile before accepting bookings.", "warning")
+            return redirect("/profile")
+    # --------------------------------------------------------
+
     # Update status
     cursor.execute("""
         UPDATE bookings SET status=%s WHERE booking_id=%s AND provider_id=%s
-    """, (status, booking_id, session["user_id"]))
+    """, (status, booking_id, provider_id))
 
     # Get details and Send Notification to User
     cursor.execute("""
@@ -1395,35 +1433,64 @@ def update_booking(booking_id, status):
 
     if b_data:
         notif_msg = f"Your booking for '{b_data['skill_name']}' has been {status}."
-        cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (b_data['user_id'], notif_msg))
+        # Using dict access if dictionary=True, else tuple access
+        user_to_notify = b_data['user_id'] if type(b_data) is dict else b_data[0]
+        cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (user_to_notify, notif_msg))
 
     db.commit()
     return redirect("/provider-bookings")
 
-# Mark Completed Route for Providers
+
+# Mark Completed Route for Providers 
 @app.route("/mark-completed/<int:booking_id>", methods=["POST"])
 def mark_completed(booking_id):
     if "user_id" not in session:
-        return redirect("/login")
+        return jsonify({"success": False, "message": "Please login first."})
 
+    provider_id = session["user_id"]
+    entered_otp = request.form.get("otp_code")
+
+    # 1. डेटाबेस से सही OTP निकालें
     cursor.execute("""
-        UPDATE bookings SET status='completed' WHERE booking_id=%s AND provider_id=%s
-    """, (booking_id, session["user_id"]))
+        SELECT otp_code FROM bookings 
+        WHERE booking_id=%s AND provider_id=%s
+    """, (booking_id, provider_id))
+    booking = cursor.fetchone()
 
-    #  Send Notification to User
-    cursor.execute("""
-        SELECT b.user_id, s.skill_name 
-        FROM bookings b JOIN skills s ON b.skill_id = s.skill_id 
-        WHERE b.booking_id=%s
-    """, (booking_id,))
-    b_data = cursor.fetchone()
+    if booking:
+        actual_otp = booking["otp_code"] if type(booking) is dict else booking[0]
 
-    if b_data:
-        notif_msg = f"Your booking for '{b_data['skill_name']}' is marked as completed. Please leave a feedback!"
-        cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (b_data['user_id'], notif_msg))
+        # 2. OTP मैच करें
+        if str(actual_otp) == str(entered_otp):
+            # अगर OTP सही है, तो आपका पुराना स्टेटस अपडेट और नोटिफिकेशन लॉजिक चलेगा
+            cursor.execute("""
+                UPDATE bookings SET status='completed' WHERE booking_id=%s AND provider_id=%s
+            """, (booking_id, provider_id))
 
-    db.commit()
-    return redirect("/provider-bookings")
+            # Send Notification to User 
+            cursor.execute("""
+                SELECT b.user_id, s.skill_name 
+                FROM bookings b JOIN skills s ON b.skill_id = s.skill_id 
+                WHERE b.booking_id=%s
+            """, (booking_id,))
+            b_data = cursor.fetchone()
+
+            if b_data:
+                u_id = b_data['user_id'] if type(b_data) is dict else b_data[0]
+                s_name = b_data['skill_name'] if type(b_data) is dict else b_data[1]
+                
+                notif_msg = f"Your booking for '{s_name}' is marked as completed. Please leave a feedback!"
+                cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (u_id, notif_msg))
+
+            db.commit()
+            # सही होने पर JSON Response
+            return jsonify({"success": True, "message": "OTP Verified! Service marked as completed."})
+        else:
+            # गलत होने पर JSON Response
+            return jsonify({"success": False, "message": "Invalid OTP! Please ask the client for correct otp."})
+
+    return jsonify({"success": False, "message": "Booking not found."})
+
 
 # Give Feedback Route
 @app.route("/give-feedback/<int:booking_id>", methods=["GET", "POST"])
@@ -1470,7 +1537,9 @@ def give_feedback(booking_id):
             cursor.execute("INSERT INTO notifications (user_id, message) VALUES (%s, %s)", (booking["provider_id"], notif_msg))
 
         db.commit()
-        return redirect("/my-bookings")
+        
+        # --- JSON Response for AJAX ---
+        return jsonify({"success": True, "message": "Feedback submitted successfully!"})
 
     return render_template("give_feedback.html", booking=booking)
 
@@ -1562,7 +1631,9 @@ def edit_feedback(feedback_id):
         """, (rating, comment, feedback_id, session["user_id"]))
 
         db.commit()
-        return redirect("/my-feedbacks")
+        
+        # --- JSON Response for AJAX ---
+        return jsonify({"success": True, "message": "Feedback updated successfully!"})
 
     cursor.execute("""
         SELECT * FROM feedback
@@ -1661,6 +1732,13 @@ def profile():
         bio = request.form.get("bio")
         profile_pic = user_info['profile_pic']
 
+        # --- अगर फील्ड खाली है, तो उसे None (NULL) बना दो ---
+        if not email or email.strip() == "":
+            email = None
+        if not phone or phone.strip() == "":
+            phone = None
+        # -------------------------------------------------------------
+
         # प्रोफाइल पिक्चर हैंडल करना
         file = request.files.get('profile_pic')
         if file and file.filename != '':
@@ -1677,48 +1755,28 @@ def profile():
 
         # Database Error को पकड़ने के लिए try block
         try:
-            
-            if email and email.strip() != "":
-                cursor.execute("""
-                    UPDATE users 
-                    SET name=%s, email=%s, phone=%s, bio=%s, profile_pic=%s 
-                    WHERE user_id=%s
-                """, (name, email, phone, bio, profile_pic, session["user_id"]))
-            else:
-
-                cursor.execute("""
-                    UPDATE users 
-                    SET name=%s, phone=%s, bio=%s, profile_pic=%s 
-                    WHERE user_id=%s
-                """, (name, phone, bio, profile_pic, session["user_id"]))
+            # अब यह हमेशा ईमेल और फोन को अपडेट करेगा, चाहे वो भरे हों या खाली (NULL)
+            cursor.execute("""
+                UPDATE users 
+                SET name=%s, email=%s, phone=%s, bio=%s, profile_pic=%s 
+                WHERE user_id=%s
+            """, (name, email, phone, bio, profile_pic, session["user_id"]))
                 
             db.commit()
             
             session['user_name'] = name 
-            return redirect("/profile")
+            
+            # ---  JSON Response for AJAX ---
+            return jsonify({"success": True, "message": "Profile updated successfully!"})
 
         except mysql.connector.Error as err:
             #  Duplicate Entry (Error Code: 1062) 
             if err.errno == 1062:
-                
-                flash('This email is already in use. Please choose another one.', 'danger')
-                
-                form_data = {
-                    'name': name,
-                    'email': email,
-                    'phone': phone,
-                    'bio': bio,
-                    'profile_pic': profile_pic
-                }
-            
-                return render_template("profile.html", user=form_data, error="duplicate_email")
+                return jsonify({"success": False, "message": "This email or phone is already in use by someone else."})
             else:
-              
-                flash('Error In Database , Please Try Again', 'warning')
-                return redirect("/profile")
+                return jsonify({"success": False, "message": "Error In Database, Please Try Again."})
     
     return render_template("profile.html", user=user_info)
-
 
 # 4. Public Profile Route 
 @app.route("/user/<int:user_id>")

@@ -1,6 +1,40 @@
 {% extends "base.html" %}
 {% block title %}My Profile{% endblock %}
 {% block content %}
+
+<style>
+    /* Base Message Box Style */
+    .form-message-box {
+        display: none;
+        padding: 12px 15px;
+        border-radius: 6px;
+        text-align: center;
+        margin-bottom: 15px;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    
+    /* Success Theme */
+    .ajax-msg-success {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid #22c55e;
+        color: #0f5132;
+    }
+    
+    /* Dark Mode Success Text */
+    [data-theme="dark"] .ajax-msg-success, body.dark-mode .ajax-msg-success {
+        color: #4ade80 !important; 
+    }
+    
+    /* Error Theme */
+    .ajax-msg-error {
+        background: rgba(255, 77, 77, 0.1);
+        border: 1px solid #ff4d4d;
+        color: #ff4d4d;
+    }
+</style>
+
 <div class="app-container-mid">
     
     <div class="dash-welcome-wrapper profile-welcome">
@@ -8,19 +42,6 @@
         <p>Manage your account, bio, and profile picture.</p>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert-message danger">
-                    <i class="fa-solid fa-circle-exclamation error-icon"></i>
-                    <div class="message-content">
-                        <strong>Error:</strong> {{ message }}
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
     <div class="card-glass" id="profile-view-section" {% if error %}style="display: none;"{% endif %}>
         <div class="profile-header-center">
             {% if user.profile_pic %}
@@ -35,17 +56,14 @@
             </div>
 
             <div class="profile-info-grid">
-
                 <div class="info-row">
                     <label>Email Address</label>
                     <p>{{ user.email or 'Not provided' }}</p>
                 </div>
-
                 <div class="info-row">
                     <label>Phone Number</label>
                     <p>{{ user.phone or 'Not provided' }}</p>
                 </div>
-
                 <div class="info-row">
                     <label>Bio (About Me)</label>
                     <p><i>{{ user.bio or 'No bio added yet.' }}</i></p>
@@ -56,7 +74,6 @@
                 <button onclick="toggleEditMode()" class="btn-outline">
                     <i class="fa-solid fa-user-pen"></i> Edit Profile
                 </button>
-                
                 <button onclick="copyProfileLink('{{ request.host_url }}user/{{ session.user_id }}')" class="btn-outline btn-share-link" id="copyBtn">
                     <i class="fa-solid fa-link"></i> Share Link
                 </button>
@@ -70,7 +87,9 @@
              Edit Details
         </h3>
 
-        <form method="POST" action="/profile" enctype="multipart/form-data">
+        <div id="formMessage" class="form-message-box"></div>
+
+        <form method="POST" action="/profile" enctype="multipart/form-data" id="ajaxForm">
             
             <div class="input-wrap mb-20">
                 <label>Profile Picture</label>
@@ -102,17 +121,14 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn-app-primary">
-                    <i class="fa-solid fa-save"></i>
-                     Save Changes
+                <button type="submit" id="submitBtn" class="btn-app-primary">
+                    <i class="fa-solid fa-save"></i> Save Changes
                 </button>
 
                 <button type="button" onclick="window.location.href='/profile'" class="btn-cancel">
-                    <i class="fa-solid fa-xmark"></i>
-                     Cancel
+                    <i class="fa-solid fa-xmark"></i> Cancel
                 </button>
             </div>
-
         </form>
     </div>
 
@@ -120,6 +136,45 @@
         <i class="fa-solid fa-arrow-left"></i>
          <span>Back to Dashboard</span>
     </a>
-
 </div>
+
+<script>
+document.getElementById('ajaxForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const msgBox = document.getElementById('formMessage');
+    const submitBtn = document.getElementById('submitBtn');
+
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    submitBtn.disabled = true;
+
+    fetch(form.action || window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+
+    .then(response => response.json())
+    .then(data => {
+        msgBox.style.display = 'block';
+        if (data.success) {
+            // Base Class + Success Class
+            msgBox.className = 'form-message-box ajax-msg-success'; 
+            msgBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + data.message;
+            submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Success!';
+            setTimeout(() => { window.location.reload(); }, 1500);
+        } else {
+            // Base Class + Error Class
+            msgBox.className = 'form-message-box ajax-msg-error'; 
+            msgBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + data.message;
+            submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
+            submitBtn.disabled = false;
+        }
+    }).catch(err => {
+        submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
+        submitBtn.disabled = false;
+    });
+});
+</script>
+
 {% endblock %}

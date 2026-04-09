@@ -29,8 +29,7 @@
             </div>
             <button class="action-btn btn-secondary" onclick="clearSearch()" id="btnClearSearch">
                 <i class="fa-solid fa-xmark"></i> Clear All
-            </div>
-        </div>
+            </button> </div>
 
         <div class="cards-grid" id="bookingsGrid">
             {% for b in bookings %}
@@ -85,6 +84,18 @@
                             <p class="accepted-note"><i class="fa-solid fa-bell"></i> 
                                 Your booking has been accepted! The provider will arrive at the scheduled time.
                             </p>
+                            
+                            <div class="secure-info-box user-otp-box">
+                                <div class="provider-contact">
+                                    <i class="fa-solid fa-phone"></i> <strong>Provider Contact:</strong>
+                                    <a href="tel:{{ b.provider_phone }}" class="contact-link">{{ b.provider_phone }}</a>
+                                </div>
+                                <div class="otp-display">
+                                    <i class="fa-solid fa-lock"></i> <strong>Service OTP:</strong>
+                                    <span class="otp-code">{{ b.otp_code }}</span>
+                                </div>
+                                <p class="otp-warning">Share this OTP ONLY after the work is completed.</p>
+                            </div>
                         {% endif %}
                     </div>
 

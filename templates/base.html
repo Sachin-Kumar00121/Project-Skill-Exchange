@@ -201,6 +201,28 @@
     {% endif %}
 
     <div class="content-area">
+        
+        <div class="flash-messages-container" style="max-width: 800px; margin: 0 auto 15px auto;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'success' %}
+                            <div style="background: rgba(34, 197, 94, 0.1);
+                             border: 1px solid #22c55e; color: #0f5132; padding: 12px 15px; 
+                             border-radius: 6px; text-align: center; margin-bottom: 10px; font-weight: bold; font-size: 14px;">
+                                <i class="fa-solid fa-circle-check"></i> {{ message }}
+                            </div>
+                        {% elif category == 'error' or category == 'danger' or category == 'warning' %}
+                            <div style="background: rgba(255, 77, 77, 0.1); 
+                            border: 1px solid #ff4d4d; color: #ff4d4d; padding: 12px 15px;
+                             border-radius: 6px; text-align: center; margin-bottom: 10px; font-weight: bold; font-size: 14px;">
+                                <i class="fa-solid fa-circle-exclamation"></i> {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
         {% block content %}{% endblock %}
     </div>
 </div>

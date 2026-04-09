@@ -6,7 +6,6 @@
 <title>SkillX Auth</title>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 </head>
 
@@ -17,12 +16,15 @@
     <div class="background-shape"></div>
     <div class="secondary-shape"></div>
 
-    <!-- LOGIN -->
     <div class="credentials-panel signin">
         <h2 class="slide-element">Login</h2>
 
           {% if error and not show_signup %}
-          <p  class="slide-element error-msg">{{ error }}</p>
+          <p class="slide-element" style="display: block; width: max-content; max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; font-weight: bold; font-size: 14px; text-align: center;"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
+          {% endif %}
+
+          {% if success_msg and not show_signup %}
+          <p class="slide-element" style="display: block; width: max-content; max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; font-weight: bold; font-size: 14px; text-align: center;"><i class="fa-solid fa-circle-check"></i> {{ success_msg }}</p>
           {% endif %}
 
         <form method="POST" action="/login">
@@ -54,17 +56,27 @@
         </form>
     </div>
 
-    <!-- RIGHT TEXT -->
     <div class="welcome-section signin">
         <h2 class="slide-element">WELCOME BACK!</h2>
     </div>
 
-    <!-- SIGNUP -->
     <div class="credentials-panel signup">
         <h2 class="slide-element">Register</h2>
 
         {% if error and show_signup %}
-        <p  class="slide-element error-msg">{{ error }}</p>
+        <p class="slide-element" style="display: block; width: max-content; 
+        max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; 
+        background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; 
+        font-weight: bold; font-size: 14px; text-align: center;">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
+        {% endif %}
+
+        {% if success_msg and show_signup %}
+        <p class="slide-element" style="display: block; width: max-content;
+         max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; 
+         background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; 
+         font-weight: bold; font-size: 14px; text-align: center;">
+         <i class="fa-solid fa-circle-check"></i> {{ success_msg }}</p>
         {% endif %}
 
         <form method="POST" action="/register" id="signupForm">
@@ -90,7 +102,6 @@
                <Small id="strengthMessage"> </Small>
             </div>
 
-            <!-- ROLE BUTTON -->
             <div class="field-wrapper slide-element role-buttons">
                 <button type="button" onclick="setRole('user',this)">Register as User</button>
                 <button type="button" onclick="setRole('provider',this)">Register as Provider</button>
@@ -108,7 +119,6 @@
         </form>
     </div>
 
-    <!-- LEFT TEXT -->
     <div class="welcome-section signup">
         <h2 class="slide-element">WELCOME!</h2>
     </div>
@@ -125,6 +135,13 @@
 
 <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 
+{% if redirect_to %}
+<script>
+    setTimeout(function() {
+        window.location.href = "{{ redirect_to }}";
+    }, 2000); // 2 Seconds 
+</script>
+{% endif %}
+
 </body>
 </html>
-

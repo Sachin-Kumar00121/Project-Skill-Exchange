@@ -39,30 +39,34 @@
                 
             <div class="card-middle-content">
                 <div class="detail-text-row">
-                    <i class="fa-solid fa-user"></i> 
-                    <strong>Client:</strong> {{ booking.user_name }}
+                    <i class="fa-solid fa-user"></i> <strong>Client:</strong> {{ booking.user_name }}
                 </div>
-
                 <div class="detail-text-row">
-                    <i class="fa-solid fa-calendar-day"></i>
-                     <strong>Date:</strong> {{ booking.display_date }}
+                    <i class="fa-solid fa-calendar-day"></i> <strong>Date:</strong> {{ booking.display_date }}
                 </div>
-
                 <div class="detail-text-row">
-                    <i class="fa-solid fa-clock"></i> 
-                    <strong>Time:</strong> {{ booking.display_time }}
+                    <i class="fa-solid fa-clock"></i> <strong>Time:</strong> {{ booking.display_time }}
                 </div>
-
                 <div class="detail-text-row">
-                    <i class="fa-solid fa-indian-rupee-sign"></i> 
-                    <strong>Price:</strong> ₹{{ booking.offered_price }} / {{ booking.unit }}
+                    <i class="fa-solid fa-indian-rupee-sign"></i> <strong>Price:</strong> ₹{{ booking.offered_price }} / {{ booking.unit }}
                 </div>
                 
                 {% if booking.remark %}
-                <div class="review-feedback-bubble"
-                style="margin-top:15px; padding-top:15px; border-top:1px dashed #e2e8f0;">
-                    <i class="fa-solid fa-comment-dots"
-                     style="color:#00d4ff; margin-right:8px;"></i> <strong>Note:</strong> {{ booking.remark }}
+                <div class="review-feedback-bubble" style="margin-top:15px; padding-top:15px; border-top:1px dashed #e2e8f0;">
+                    <i class="fa-solid fa-comment-dots" style="color:#00d4ff; margin-right:8px;"></i> <strong>Note:</strong> {{ booking.remark }}
+                </div>
+                {% endif %}
+
+
+                {% if booking.status == 'accepted' %}
+                <div class="secure-info-box provider-client-info" style="margin-top: 15px;">
+                    <div class="detail-text-row">
+                        <i class="fa-solid fa-location-dot"></i> <strong>Address:</strong> {{ booking.address }}
+                    </div>
+                    <div class="detail-text-row" style="margin-top: 8px;">
+                        <i class="fa-solid fa-phone"></i> <strong>Phone:</strong>
+                        <a href="tel:{{ booking.contact_phone }}" class="contact-link">{{ booking.contact_phone }}</a>
+                    </div>
                 </div>
                 {% endif %}
             </div>
@@ -70,22 +74,15 @@
             <div class="clean-action-footer">
                 {% if booking.status == "pending" %}
                     <form method="POST" action="/update-booking/{{ booking.booking_id }}/accepted">
-                        <button type="submit" class="app-action-btn btn-solid-accept">
-                            <i class="fa-solid fa-check"></i> Accept
-                        </button>
+                        <button type="submit" class="app-action-btn btn-solid-accept"><i class="fa-solid fa-check"></i> Accept</button>
                     </form>
-
                     <form method="POST" action="/update-booking/{{ booking.booking_id }}/rejected">
-                        <button type="submit" class="app-action-btn btn-solid-reject">
-                            <i class="fa-solid fa-xmark"></i> Reject
-                        </button>
+                        <button type="submit" class="app-action-btn btn-solid-reject"><i class="fa-solid fa-xmark"></i> Reject</button>
                     </form>
                 {% elif booking.status == "accepted" %}
-                    <form method="POST" action="/mark-completed/{{ booking.booking_id }}">
-                        <button type="submit" class="app-action-btn btn-solid-complete">
-                            <i class="fa-solid fa-flag-checkered"></i> Mark Completed
-                        </button>
-                    </form>
+                    <button type="button" class="app-action-btn btn-solid-complete" onclick="openOtpModal('{{ booking.booking_id }}')">
+                        <i class="fa-solid fa-flag-checkered"></i> Mark Completed
+                    </button>
                 {% else %}
                     <button class="app-action-btn btn-action-disabled" disabled>
                         <i class="fa-solid fa-lock"></i> No Action Available
@@ -113,7 +110,29 @@
 
 </div>
 
+<div id="otpModal" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <div class="custom-modal-header">
+            <h3>Verify Service OTP</h3>
+            <button type="button" class="close-modal-btn" onclick="closeOtpModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="otpForm" action="" method="POST">
+            <div class="custom-modal-body">
+                <p>Ask the user for the 4-digit OTP to securely mark this service as completed.</p>
+                
+                <div id="otpMessage" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 6px; font-size: 14px; text-align: center; font-weight: bold;"></div>
+
+                <input type="text" name="otp_code" class="otp-input-field" placeholder="0000" required pattern="[0-9]{4}" maxlength="4" autocomplete="off">
+            </div>
+            <div class="custom-modal-footer">
+                <button type="submit" id="verifySubmitBtn" class="app-action-btn btn-solid-complete w-100">Verify & Complete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+    // Original search script
     function handleBookingSearch() {
         const input = document.getElementById('bookingSearchInput').value.toLowerCase();
         const clearBtn = document.getElementById('btnClearBookingSearch');
@@ -140,7 +159,6 @@
                     cards[i].style.display = "none";
                 }
             }
-
             if (visibleCount === 0 && input.length > 0) {
                 noResults.style.display = "flex";
             } else {
@@ -155,6 +173,74 @@
         handleBookingSearch(); 
         input.focus();
     }
+
+    // Modal Display Logic
+    function openOtpModal(bookingId) {
+        const modal = document.getElementById('otpModal');
+        const form = document.getElementById('otpForm');
+        const msgBox = document.getElementById('otpMessage');
+        
+        form.action = '/mark-completed/' + bookingId; 
+        msgBox.style.display = 'none'; // Hide message box when opening
+        modal.style.display = 'flex';
+    }
+
+    function closeOtpModal() {
+        const modal = document.getElementById('otpModal');
+        const form = document.getElementById('otpForm');
+        const msgBox = document.getElementById('otpMessage');
+        
+        modal.style.display = 'none';
+        form.reset();
+        msgBox.style.display = 'none';
+    }
+
+    //  AJAX Logic to prevent page reload on wrong OTP
+    document.getElementById('otpForm').addEventListener('submit', function(e) {
+        e.preventDefault(); 
+
+        const form = e.target;
+        const formData = new FormData(form);
+        const msgBox = document.getElementById('otpMessage');
+        const submitBtn = document.getElementById('verifySubmitBtn');
+
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+        submitBtn.disabled = true;
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            msgBox.style.display = 'block';
+            if (data.success) {
+                msgBox.style.backgroundColor = '#d1e7dd';
+                msgBox.style.color = '#0f5132';
+                msgBox.style.border = '1px solid #badbcc';
+                msgBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + data.message;
+                
+                submitBtn.innerHTML = 'Success!';
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1200); // 1.2 seconds wait before reload
+            } else {
+                msgBox.style.backgroundColor = '#f8d7da';
+                msgBox.style.color = '#842029';
+                msgBox.style.border = '1px solid #f5c2c7';
+                msgBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + data.message;
+                
+                submitBtn.innerHTML = 'Verify & Complete';
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            submitBtn.innerHTML = 'Verify & Complete';
+            submitBtn.disabled = false;
+        });
+    });
 </script>
 
 {% endblock %}

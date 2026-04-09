@@ -21,7 +21,12 @@
     </div>
 
     <div class="modern-card">
-        <form method="POST" enctype="multipart/form-data">
+        
+        <div id="formMessage" style="display: none; padding: 12px 15px;
+         border-radius: 6px; text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 14px;">
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="ajaxForm">
 
             <div class="form-grid mb-20">
                 <div class="input-wrap">
@@ -80,7 +85,7 @@
             </div>
 
             <div class="form-actions" style="display: flex; gap: 15px; margin-top: 10px;">
-                <button type="submit" class="action-btn btn-primary" style="flex: 2; justify-content: center;">
+                <button type="submit" id="submitBtn" class="action-btn btn-primary" style="flex: 2; justify-content: center;">
                     <i class="fa-solid fa-floppy-disk"></i> Update Skill
                 </button>
 
@@ -92,6 +97,7 @@
 </div>
 
 <script>
+    // File Upload Script
     document.addEventListener("DOMContentLoaded", function() {
         const fileInput = document.getElementById('photoInput');
         const uploaderBox = document.getElementById('photoUploaderBox');
@@ -121,13 +127,44 @@
             uploaderText.innerHTML = originalText;
             uploaderBox.classList.remove('photo-selected');
             
-            
             if (hasOriginalPhoto) {
                 document.querySelector('.uploader-main-content i').className = "fa-solid fa-image";
             } else {
                 document.querySelector('.uploader-main-content i').className = "fa-solid fa-camera-rotate";
             }
         }
+    });
+
+    // AJAX Form Submission
+    document.getElementById('ajaxForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const msgBox = document.getElementById('formMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+        submitBtn.disabled = true;
+
+        fetch(window.location.href, { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            msgBox.style.display = 'block';
+            if (data.success) {
+                msgBox.className = 'ajax-msg-success'; // Theme aware class
+                msgBox.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + data.message;
+                submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Success!';
+                setTimeout(() => { window.location.href = "/my-skills"; }, 1500);
+            } else {
+                msgBox.className = 'ajax-msg-error';
+                msgBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + data.message;
+                submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Skill';
+                submitBtn.disabled = false;
+            }
+        }).catch(err => {
+            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Skill';
+            submitBtn.disabled = false;
+        });
     });
 </script>
 {% endblock %}

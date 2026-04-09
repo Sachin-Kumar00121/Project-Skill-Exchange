@@ -171,6 +171,16 @@
                 </div>
             </div>
 
+            <div class="input-wrap mb-15">
+              <label>Contact Number (For this service)</label>
+              <input type="text" name="contact_phone" placeholder="Enter 10-digit mobile number" required pattern="[0-9]{10}">
+           </div>
+
+            <div class="input-wrap mb-15">
+              <label>Service Address/Location</label>
+              <textarea name="address" placeholder="Enter full address for the provider to reach..." required rows="3"></textarea>
+            </div>
+
             <div class="input-wrap mb-25">
                 <label>Special Remark (Optional)</label>
                 <textarea name="remark" rows="3" placeholder="Write any special request..."></textarea>
@@ -334,7 +344,6 @@
         applyTransform();
     }
 </script>
-
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
