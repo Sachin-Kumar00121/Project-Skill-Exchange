@@ -1,16 +1,18 @@
  // book popup 
+function openPopup(skillId, price, unit) {
+    document.getElementById('popupSkillId').value = skillId;
+    document.getElementById('popupPrice').value = price;
+    document.getElementById('popupUnit').value = unit;
+    document.getElementById('bookingModalOverlay').classList.add('show-modal');
+    
+    document.body.style.overflow = "hidden"; 
+}
 
-  function openPopup(skillId, price, unit) {
-        document.getElementById('popupSkillId').value = skillId;
-        document.getElementById('popupPrice').value = price;
-        document.getElementById('popupUnit').value = unit;
-        document.getElementById('bookingModalOverlay').classList.add('show-modal');
-    }
-
-    function closePopup() {
-        document.getElementById('bookingModalOverlay').classList.remove('show-modal');
-    }
-
+function closePopup() {
+    document.getElementById('bookingModalOverlay').classList.remove('show-modal');
+    
+    document.body.style.overflow = "auto"; 
+}
     
 // 🔹 Back button popup
 window.onpageshow = function(event) {

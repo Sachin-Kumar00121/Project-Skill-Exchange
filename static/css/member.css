@@ -1482,8 +1482,12 @@ span,
     background: rgba(15, 23, 42, 0.6); 
     backdrop-filter: blur(4px); 
     z-index: 9999; 
-    align-items: center; 
     justify-content: center; 
+    
+    /* SCROLL FIX CHANGES */
+    align-items: flex-start; 
+    overflow-y: auto;       
+    padding: 40px 15px;     
 }
 
 .custom-modal-overlay.show-modal { 
@@ -1498,6 +1502,7 @@ span,
     padding: 30px; 
     box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
     animation: modalSlideUp 0.3s ease-out; 
+    margin: auto;
 }
 
 @keyframes modalSlideUp { 
@@ -2331,3 +2336,57 @@ body[data-theme="dark"] .guest-dropdown-menu a:hover {
 .clickable-img:hover { filter: brightness(0.8); }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Location Suggestions Dropdown CSS */
+    .suggestions-box {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .suggestion-item {
+        padding: 12px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+        color: #1a1f36;
+        transition: background 0.2s;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-item:hover {
+        background: #e8f0fe;
+        color: #00d4ff;
+    }
+
+    .suggestion-item i {
+        color: #64748b;
+        margin-right: 8px;
+    }
+
+    /* Dark Mode Support for Suggestions */
+    body[data-theme="dark"] .suggestions-box {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    body[data-theme="dark"] .suggestion-item {
+        border-bottom-color: #334155;
+        color: #f1f5f9;
+    }
+    
+    body[data-theme="dark"] .suggestion-item:hover {
+        background: #334155;
+        color: #00d4ff;
+    }

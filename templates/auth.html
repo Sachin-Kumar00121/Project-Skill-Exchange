@@ -20,11 +20,19 @@
         <h2 class="slide-element">Login</h2>
 
           {% if error and not show_signup %}
-          <p class="slide-element" style="display: block; width: max-content; max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; font-weight: bold; font-size: 14px; text-align: center;"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
+          <p class="slide-element" style="display: block; 
+          width: max-content; max-width: 90%; margin: 10px auto 15px auto; 
+          padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1);
+           border: 1px solid #00d4ff; color: #ff4d4d; font-weight: bold; font-size: 14px; 
+           text-align: center;"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
           {% endif %}
 
           {% if success_msg and not show_signup %}
-          <p class="slide-element" style="display: block; width: max-content; max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; font-weight: bold; font-size: 14px; text-align: center;"><i class="fa-solid fa-circle-check"></i> {{ success_msg }}</p>
+          <p class="slide-element" style="display: block; 
+          width: max-content; max-width: 90%; margin: 10px auto 15px auto; 
+          padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1); 
+          border: 1px solid #00d4ff; color: #00ff88; font-weight: bold; font-size: 14px;
+           text-align: center;"><i class="fa-solid fa-circle-check"></i> {{ success_msg }}</p>
           {% endif %}
 
         <form method="POST" action="/login">
@@ -64,19 +72,19 @@
         <h2 class="slide-element">Register</h2>
 
         {% if error and show_signup %}
-        <p class="slide-element" style="display: block; width: max-content; 
-        max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; 
-        background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; 
-        font-weight: bold; font-size: 14px; text-align: center;">
-        <i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
+        <p class="slide-element" style="display: block; 
+        width: max-content; max-width: 90%; margin: 10px auto 15px auto; 
+        padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1);
+        border: 1px solid #00d4ff; color: #ff4d4d; font-weight: bold; font-size: 14px;
+         text-align: center;"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</p>
         {% endif %}
 
         {% if success_msg and show_signup %}
-        <p class="slide-element" style="display: block; width: max-content;
-         max-width: 90%; margin: 10px auto 15px auto; padding: 8px 15px; border-radius: 5px; 
-         background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #ff4d4d; 
-         font-weight: bold; font-size: 14px; text-align: center;">
-         <i class="fa-solid fa-circle-check"></i> {{ success_msg }}</p>
+        <p class="slide-element" style="display: block; 
+        width: max-content; max-width: 90%; margin: 10px auto 15px auto;
+         padding: 8px 15px; border-radius: 5px; background: rgba(0, 212, 255, 0.1);
+          border: 1px solid #00d4ff; color: #00ff88; font-weight: bold; font-size: 14px; 
+          text-align: center;"><i class="fa-solid fa-circle-check"></i> {{ success_msg }}</p>
         {% endif %}
 
         <form method="POST" action="/register" id="signupForm">
@@ -139,7 +147,7 @@
 <script>
     setTimeout(function() {
         window.location.href = "{{ redirect_to }}";
-    }, 2000); // 2 Seconds 
+    }, 2000); // 2 Seconds delay
 </script>
 {% endif %}
 

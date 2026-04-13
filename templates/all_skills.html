@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Find Services{% endblock %}
 {% block content %}
+
 <div class="app-container-large">
 
     <div class="marketplace-top-bar">
@@ -176,9 +177,11 @@
               <input type="text" name="contact_phone" placeholder="Enter 10-digit mobile number" required pattern="[0-9]{10}">
            </div>
 
-            <div class="input-wrap mb-15">
+            <div class="input-wrap mb-15" style="position: relative;">
               <label>Service Address/Location</label>
-              <textarea name="address" placeholder="Enter full address for the provider to reach..." required rows="3"></textarea>
+              <textarea name="address" id="bookingAddress" placeholder="Start typing your city or address..." required rows="3" autocomplete="off"></textarea>
+              
+              <div id="addressSuggestions" class="suggestions-box" style="display: none;"></div>
             </div>
 
             <div class="input-wrap mb-25">
@@ -343,6 +346,65 @@
         
         applyTransform();
     }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const addressInput = document.getElementById('bookingAddress');
+        const suggestionsBox = document.getElementById('addressSuggestions');
+        let timeoutId;
+
+        if (addressInput) {
+            addressInput.addEventListener('input', function() {
+                clearTimeout(timeoutId);
+                const query = this.value.trim();
+                
+                if (query.length < 3) {
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
+
+                // Type karne ke 500ms baad search karega (Server overload bachane ke liye)
+                timeoutId = setTimeout(() => {
+                    // API Call to Nominatim (OpenStreetMap) restricted to India
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=5`)
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsBox.innerHTML = '';
+                            
+                            if (data.length > 0) {
+                                data.forEach(place => {
+                                    const div = document.createElement('div');
+                                    div.className = 'suggestion-item';
+                                    div.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${place.display_name}`;
+                                    
+                                    // Click karne par address box me set ho jayega
+                                    div.onclick = function() {
+                                        addressInput.value = place.display_name;
+                                        suggestionsBox.style.display = 'none';
+                                    };
+                                    
+                                    suggestionsBox.appendChild(div);
+                                });
+                                suggestionsBox.style.display = 'block';
+                            } else {
+                                suggestionsBox.style.display = 'none';
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Location search error:", err);
+                        });
+                }, 300); 
+            });
+
+            // Bahar click karne par dropdown band ho jaye
+            document.addEventListener('click', function(e) {
+                if (e.target !== addressInput && e.target !== suggestionsBox) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+        }
+    });
 </script>
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>

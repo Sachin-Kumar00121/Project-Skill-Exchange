@@ -50,6 +50,10 @@
                 <div class="detail-text-row">
                     <i class="fa-solid fa-indian-rupee-sign"></i> <strong>Price:</strong> ₹{{ booking.offered_price }} / {{ booking.unit }}
                 </div>
+
+                <div class="detail-text-row">
+                    <i class="fa-solid fa-location-dot"></i> <strong>Address:</strong> {{ booking.address }}
+                </div>
                 
                 {% if booking.remark %}
                 <div class="review-feedback-bubble" style="margin-top:15px; padding-top:15px; border-top:1px dashed #e2e8f0;">
@@ -60,9 +64,7 @@
 
                 {% if booking.status == 'accepted' %}
                 <div class="secure-info-box provider-client-info" style="margin-top: 15px;">
-                    <div class="detail-text-row">
-                        <i class="fa-solid fa-location-dot"></i> <strong>Address:</strong> {{ booking.address }}
-                    </div>
+                    
                     <div class="detail-text-row" style="margin-top: 8px;">
                         <i class="fa-solid fa-phone"></i> <strong>Phone:</strong>
                         <a href="tel:{{ booking.contact_phone }}" class="contact-link">{{ booking.contact_phone }}</a>
